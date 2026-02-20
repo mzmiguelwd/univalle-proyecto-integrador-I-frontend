@@ -1,16 +1,37 @@
-# React + Vite
+# Mini Proyecto 1 (Front) — Planificador de estudio para actividades evaluativas
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 📌 Descripción
 
-Currently, two official plugins are available:
+Aplicación web que permite a estudiantes universitarios planificar, ejecutar y reprogramar actividades evaluativas, así como visualizar su progreso y prioridades.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+El sistema permite gestionar el trabajo académico de forma clara y eficiente, especialmente cuando surgen imprevistos como cambios de fechas o sobrecarga de tareas.
 
-## React Compiler
+---
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+## 🎯 Objetivo del proyecto
 
-## Expanding the ESLint configuration
+Construir una aplicación web que permita:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Crear actividades evaluativas y su plan de trabajo inicial
+- Registrar el avance real de las actividades
+- Reprogramar tareas ante imprevistos
+- Detectar conflictos de planificación
+- Visualizar progreso y prioridades del día
+
+---
+
+## 🛠 Tecnologías utilizadas
+
+### Backend
+
+- Django
+- Django REST Framework
+- PostgreSQL (Supabase)
+
+### Frontend
+
+- React
+
+---
+
+## 📂 Estructura del proyecto
