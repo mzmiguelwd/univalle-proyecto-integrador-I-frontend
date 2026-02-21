@@ -1,14 +1,50 @@
 import { useNavigate, Link } from "react-router-dom";
+import { useState } from "react";
 
 import classes from "./Auth.module.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 function SignupPage() {
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = (event) => {
+  const handleChange = (event) => {
+    setFormData({ ...formData, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    // Aquí iría el registro del usuario, por ahora simplemente navegamos al login
-    navigate("/");
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Ocurrió un error al registrarse");
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("username", data.username);
+      navigate("/");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -17,21 +53,48 @@ function SignupPage() {
         <h1 className={classes.title}>Crear cuenta</h1>
         <p className={classes.subtitle}>Únete para organizar tus proyectos</p>
 
-        <form className={classes.form} onSubmit={handleSignup}>
+        {error && <div className={classes.errorBox}>{error}</div>}
+
+        <form className={classes.form} onSubmit={handleSubmit}>
           <div className={classes.inputGroup}>
-            <label>Nombre completo</label>
-            <input type="text" placeholder="Miguel Zuluaga" required />
+            <label>Nombre de usuario</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="ej: mzmiguelwd"
+              required
+            />
           </div>
           <div className={classes.inputGroup}>
             <label>Correo electrónico</label>
-            <input type="email" placeholder="tu@ejemplo.com" required />
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="tu@correo.com"
+              required
+            />
           </div>
           <div className={classes.inputGroup}>
             <label>Contraseña</label>
-            <input type="password" placeholder="••••••••" required />
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
           </div>
-          <button type="submit" className={classes.submitBtn}>
-            Registrarse
+          <button
+            type="submit"
+            className={classes.submitBtn}
+            disabled={isLoading}
+          >
+            {isLoading ? "Creando..." : "Registrarse"}
           </button>
         </form>
 
