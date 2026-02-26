@@ -1,0 +1,25 @@
+.pageContainer {
+  display: flex;
+  gap: 32px;
+  padding: 40px;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* columna izquierda */
+.leftColumn {
+  flex: 0.45;
+}
+
+/* columna derecha */
+.rightColumn {
+  flex: 0.55;
+}
+
+/* estilo tipo card */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
