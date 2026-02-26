@@ -1,0 +1,85 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: #f9fafb;
+  border-radius: 16px;
+}
+
+.title {
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+label {
+  font-weight: 500;
+  font-size: 14px;
+  color: #374151;
+}
+
+.input {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: white;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #3b82f6;
+}
+
+.textarea {
+  min-height: 100px;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  resize: none;
+  font-size: 14px;
+}
+
+.typeContainer {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.typeButton {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: none;
+  background: #e5e7eb;
+  cursor: pointer;
+  text-transform: capitalize;
+  font-size: 14px;
+}
+
+.active {
+  background: #2563eb;
+  color: white;
+}
+
+.scheduleRow {
+  display: flex;
+  gap: 10px;
+}
+
+.submitButton {
+  margin-top: 20px;
+  padding: 14px;
+  border-radius: 14px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submitButton:hover {
+  background: #1d4ed8;
+}
