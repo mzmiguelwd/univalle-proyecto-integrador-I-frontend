@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import classes from "./Today.module.css";
 import TaskCard from "../components/TaskCard";
 import { fetchTodayTasks } from "../api/tasks";
+import TodayTaskRow from "../components/TodayTaskRow";
 
 function TodayPage() {
   // Sección mock 
@@ -40,6 +41,7 @@ function TodayPage() {
   const [todayTasks, setTodayTasks] = useState([]);
   const [loadingToday, setLoadingToday] = useState(true);
   const [todayErr, setTodayErr] = useState("");
+  const [openMenuTaskId, setOpenMenuTaskId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -111,21 +113,24 @@ function TodayPage() {
             <p>No tienes tareas pendientes para hoy. ¡Aprovecha para descansar!</p>
           </div>
         ) : (
-          <ul style={{ marginTop: 12 }}>
+          <div className={classes.todayList}>
             {todayTasks.map((t) => (
-              <li key={t.id} style={{ marginBottom: 10 }}>
-                <strong>{t.title}</strong>
-                {t.course ? ` — ${t.course}` : ""}
-                {t.task_type ? ` (${t.task_type})` : ""}
-
-                {Array.isArray(t.subtasks) && t.subtasks.length > 0 ? (
-                  <div style={{ fontSize: 12, opacity: 0.8 }}>
-                    Subtareas: {t.subtasks.length}
-                  </div>
-                ) : null}
-              </li>
+              <TodayTaskRow
+                key={t.id}
+                task={t}
+                isMenuOpen={openMenuTaskId === t.id}
+                onToggleMenu={() =>
+                  setOpenMenuTaskId((prev) => (prev === t.id ? null : t.id))
+                }
+                onCloseMenu={() => setOpenMenuTaskId(null)}
+                onAction={(action) => {
+                  // Aquí conectas luego con endpoints o navegación
+                  console.log("Acción:", action, "Tarea:", t.id);
+                  setOpenMenuTaskId(null);
+                }}
+              />
             ))}
-          </ul>
+          </div>
         )}
       </section>
     </div>
