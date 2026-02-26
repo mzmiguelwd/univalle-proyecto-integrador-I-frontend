@@ -1,4 +1,8 @@
+
 import { useEffect, useState } from "react";
+
+import { Link } from "react-router-dom";
+
 import classes from "./Today.module.css";
 import TaskCard from "../components/TaskCard";
 import { fetchTodayTasks } from "../api/tasks";
@@ -67,6 +71,9 @@ function TodayPage() {
       <header className={classes.header}>
         <h1>¡Hola, Miguel! 👋</h1>
         <p>Tienes {activities.length} actividades para priorizar hoy.</p>
+        <Link to="/actividad/demo" className={classes.demoBtn}>
+          Ver demo US-2 (subtareas rápidas)
+        </Link>
       </header>
 
       {/* Sección mock */}
@@ -74,7 +81,13 @@ function TodayPage() {
         <h2 className={classes.sectionTitle}>Prioridades actuales</h2>
         <div className={classes.grid}>
           {activities.map((activity) => (
-            <TaskCard key={activity.id} {...activity} />
+            <Link
+              key={activity.id}
+              to={`/actividad/${activity.id}`}
+              className={classes.cardLink}
+            >
+              <TaskCard {...activity} />
+            </Link>
           ))}
         </div>
       </section>
