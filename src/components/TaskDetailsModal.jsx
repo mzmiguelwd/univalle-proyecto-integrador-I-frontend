@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import classes from "./TaskDetailsModal.module.css";
-import api from "../api/client"; 
+import api from "../api/client";
 
 export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
   const [subtasks, setSubtasks] = useState([]);
@@ -38,16 +38,16 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
 
     // optimistic UI
     setSubtasks((prev) =>
-      prev.map((s) => (s.id === st.id ? { ...s, is_completed: next } : s))
+      prev.map((s) => (s.id === st.id ? { ...s, is_completed: next } : s)),
     );
 
     try {
-      // 
+      //
       await api.patch(`/api/subtasks/${st.id}/`, { is_completed: next });
     } catch (e) {
       // rollback
       setSubtasks((prev) =>
-        prev.map((s) => (s.id === st.id ? { ...s, is_completed: current } : s))
+        prev.map((s) => (s.id === st.id ? { ...s, is_completed: current } : s)),
       );
       setError("No se pudo actualizar la subtarea.");
     } finally {
@@ -60,7 +60,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
   const completedCount = subtasks.filter((s) => s.is_completed).length;
 
   console.log("SUBTASKS EN MODAL:", task?.subtasks);
-    console.log("PRIMERA SUBTASK:", task?.subtasks?.[0]);
+  console.log("PRIMERA SUBTASK:", task?.subtasks?.[0]);
 
   return (
     <div className={classes.backdrop} onMouseDown={onClose}>
@@ -70,11 +70,17 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
             <h2 className={classes.title}>{task.title}</h2>
             <p className={classes.meta}>
               {task.course ? `Materia: ${task.course}` : "Sin materia"} •{" "}
-              {subtasks.length ? `${completedCount}/${subtasks.length} (${progress}%)` : "0%"}
+              {subtasks.length
+                ? `${completedCount}/${subtasks.length} (${progress}%)`
+                : "0%"}
             </p>
           </div>
 
-          <button className={classes.closeBtn} onClick={onClose} aria-label="Cerrar">
+          <button
+            className={classes.closeBtn}
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
             ✕
           </button>
         </div>
@@ -111,7 +117,9 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                         {st.name}
                       </div>
                       {st.description ? (
-                        <div className={classes.subtaskDesc}>{st.description}</div>
+                        <div className={classes.subtaskDesc}>
+                          {st.description}
+                        </div>
                       ) : null}
                     </div>
 
@@ -142,7 +150,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
               onEdit?.(task.id);
             }}
           >
-            Editar tarea
+            Ver detalles
           </button>
         </div>
       </div>
