@@ -6,7 +6,7 @@ import { Link } from "react-router-dom";
 import classes from "./Today.module.css";
 import TaskCard from "../components/TaskCard";
 import { fetchTodayTasks } from "../api/tasks";
-import TodayTaskRow from "../components/TodayTaskRow";
+import TodayTaskRow from ".../components/TodayTaskRow";
 
 function TodayPage() {
   // Sección mock 
