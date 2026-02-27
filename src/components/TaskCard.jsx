@@ -1,3 +1,5 @@
+import { MdMoreVert, MdCheckCircle, MdCalendarToday } from "react-icons/md";
+
 import classes from "./TaskCard.module.css";
 
 function TaskCard({
@@ -11,14 +13,16 @@ function TaskCard({
   compact,
 }) {
   const priorityKey = priority?.toLowerCase() || "baja";
-  const priorityClass = classes[priorityKey];
+  const priorityClass = isCompleted
+    ? classes.badgeCompleted
+    : classes[priorityKey];
 
-  const cardClasses = [
-    classes.card,
-    isCompleted ? classes.completed : "",
-    isOverdue ? classes.overdue : "",
-    compact ? classes.compact : "",
-  ].join(" ");
+  const cardClasses = `
+    ${classes.card} 
+    ${isCompleted ? classes.completed : ""} 
+    ${isOverdue ? classes.overdue : ""} 
+    ${compact ? classes.compact : ""}
+  `.trim();
 
   return (
     <article className={cardClasses}>
@@ -26,9 +30,12 @@ function TaskCard({
         <span className={`${classes.badge} ${priorityClass}`}>
           {isCompleted ? "Completada" : priority}
         </span>
-        <button className={classes.optionsBtn} aria-label="Opciones de tarea">
-          <span className="material-symbols-outlined">more_vert</span>
-        </button>
+
+        {!compact && (
+          <button className={classes.optionsBtn} aria-label="Opciones de tarea">
+            <MdMoreVert className={classes.optionsIcon} />
+          </button>
+        )}
       </header>
 
       <div className={classes.body}>
@@ -39,8 +46,12 @@ function TaskCard({
       {!compact && (
         <footer className={classes.footer}>
           <div className={classes.info}>
-            <span className="material-symbols-outlined">
-              {isCompleted ? "check_circle" : "calendar_today"}
+            <span className={classes.infoIcon}>
+              {isCompleted ? (
+                <MdCheckCircle className={classes.checkIcon} />
+              ) : (
+                <MdCalendarToday className={classes.calendarIcon} />
+              )}
             </span>
             <span>{dueDate}</span>
           </div>
@@ -48,14 +59,15 @@ function TaskCard({
           <div className={classes.progressSection}>
             <div className={classes.progressHeader}>
               <span className={classes.progressLabel}>Progreso</span>
-              <span className={classes.progressValue}>{progress}%</span>
+              <span className={classes.progressValue}>
+                {isCompleted ? "100%" : `${progress}%`}
+              </span>
             </div>
             <div className={classes.progressBar}>
               <div
                 className={classes.progressFill}
                 style={{
-                  width: `${progress}%`,
-                  backgroundColor: isCompleted ? "#4caf50" : "",
+                  width: isCompleted ? "100%" : `${progress}%`,
                 }}
               ></div>
             </div>

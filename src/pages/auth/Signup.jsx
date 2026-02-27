@@ -1,9 +1,8 @@
-import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 
 import classes from "./Auth.module.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { registerUser } from "../../api/auth";
 
 function SignupPage() {
   const navigate = useNavigate();
@@ -25,43 +24,32 @@ function SignupPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/register/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        let errorMessage =
-          "Ocurrió un error al registrarse. Verifica tus datos.";
-
-        if (data && typeof data === "object") {
-          if (data.detail) {
-            errorMessage = data.detail;
-          } else {
-            const errorKeys = Object.keys(data);
-            if (errorKeys.length > 0) {
-              const firstError = data[errorKeys[0]];
-              if (Array.isArray(firstError)) {
-                errorMessage = firstError[0];
-              } else if (typeof firstError === "string") {
-                errorMessage = firstError;
-              }
-            }
-          }
-        }
-
-        throw new Error(errorMessage);
-      }
+      const data = await registerUser(formData);
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
 
       navigate("/");
     } catch (error) {
-      setError(error.message);
+      let errorMessage = "Ocurrió un error al registrarse. Verifica tus datos.";
+
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+        if (data.detail) {
+          errorMessage = data.detail;
+        } else {
+          const errorKeys = Object.keys(data);
+          if (errorKeys.length > 0) {
+            const firstError = data[errorKeys[0]];
+            if (Array.isArray(firstError)) {
+              errorMessage = firstError[0];
+            } else if (typeof firstError === "string") {
+              errorMessage = firstError;
+            }
+          }
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +71,7 @@ function SignupPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="ej: usuario123"
+              placeholder="Ej: usuario123"
               required
             />
           </div>
@@ -94,7 +82,7 @@ function SignupPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="ej: tu@correo.com"
+              placeholder="Ej: tu@correo.com"
               required
             />
           </div>

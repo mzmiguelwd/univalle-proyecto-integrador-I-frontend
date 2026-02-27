@@ -2,8 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import classes from "./Auth.module.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { loginUser } from "../../api/auth";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -24,33 +23,7 @@ function LoginPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/login/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        let errorMessage = "Credenciales inválidas. Verifica tus datos.";
-
-        if (data && typeof data === "object") {
-          if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
-            errorMessage = data.non_field_errors[0];
-          } else {
-            const errorKeys = Object.keys(data);
-            if (errorKeys.length > 0) {
-              const firstError = data[errorKeys[0]];
-              if (Array.isArray(firstError)) {
-                errorMessage = firstError[0];
-              }
-            }
-          }
-        }
-
-        throw new Error(errorMessage);
-      }
+      const data = await loginUser(formData);
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
@@ -61,7 +34,23 @@ function LoginPage() {
 
       navigate("/hoy");
     } catch (error) {
-      setError(error.message);
+      let errorMessage = "Credenciales inválidas. Verifica tus datos.";
+
+      if (error.response && error.response.data) {
+        const data = error.response.data;
+        if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
+          errorMessage = data.non_field_errors[0];
+        } else {
+          const errorKeys = Object.keys(data);
+          if (errorKeys.length > 0) {
+            const firstError = data[errorKeys[0]];
+            if (Array.isArray(firstError)) {
+              errorMessage = firstError[0];
+            }
+          }
+        }
+      }
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +72,7 @@ function LoginPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="ej: usuario123"
+              placeholder="Ej: usuario123"
               required
             />
           </div>
