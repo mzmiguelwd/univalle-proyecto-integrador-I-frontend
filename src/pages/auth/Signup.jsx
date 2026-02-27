@@ -34,11 +34,31 @@ function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Ocurrió un error al registrarse");
+        let errorMessage =
+          "Ocurrió un error al registrarse. Verifica tus datos.";
+
+        if (data && typeof data === "object") {
+          if (data.detail) {
+            errorMessage = data.detail;
+          } else {
+            const errorKeys = Object.keys(data);
+            if (errorKeys.length > 0) {
+              const firstError = data[errorKeys[0]];
+              if (Array.isArray(firstError)) {
+                errorMessage = firstError[0];
+              } else if (typeof firstError === "string") {
+                errorMessage = firstError;
+              }
+            }
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
+
       navigate("/");
     } catch (error) {
       setError(error.message);
@@ -63,7 +83,7 @@ function SignupPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="ej: mzmiguelwd"
+              placeholder="ej: usuario123"
               required
             />
           </div>
@@ -74,7 +94,7 @@ function SignupPage() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="tu@correo.com"
+              placeholder="ej: tu@correo.com"
               required
             />
           </div>

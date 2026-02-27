@@ -33,9 +33,23 @@ function LoginPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.error || "Credenciales inválidas. Verifica tus datos.",
-        );
+        let errorMessage = "Credenciales inválidas. Verifica tus datos.";
+
+        if (data && typeof data === "object") {
+          if (data.non_field_errors && Array.isArray(data.non_field_errors)) {
+            errorMessage = data.non_field_errors[0];
+          } else {
+            const errorKeys = Object.keys(data);
+            if (errorKeys.length > 0) {
+              const firstError = data[errorKeys[0]];
+              if (Array.isArray(firstError)) {
+                errorMessage = firstError[0];
+              }
+            }
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       localStorage.setItem("token", data.token);
@@ -69,7 +83,7 @@ function LoginPage() {
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="mzmiguelwd"
+              placeholder="ej: usuario123"
               required
             />
           </div>
