@@ -7,6 +7,9 @@ import { fetchDashboardTasks } from "../api/tasks";
 import { logoutUser } from "../api/auth";
 import TaskCard from "../components/TaskCard";
 
+import TaskDetailsModal from "../components/TaskDetailsModal";
+
+
 function TodayPage() {
   const [tasks, setTasks] = useState({
     overdue: [],
@@ -18,6 +21,20 @@ function TodayPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const username = localStorage.getItem("username") || "Usuario";
+
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+
+  const openModal = (task) => {
+    setSelectedTask(task);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedTask(null);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -146,10 +163,11 @@ function TodayPage() {
               <div className={classes.grid}>
                 {" "}
                 {tasks.overdue.map((t) => (
-                  <Link
+                  <div
                     key={t.id}
                     to={`/actividad/${t.id}`}
                     className={classes.cardLink}
+                    onClick={() => openModal(t)}
                   >
                     <TaskCard
                       title={t.title}
@@ -158,8 +176,9 @@ function TodayPage() {
                       progress={calculateProgress(t.subtasks)}
                       dueDate={formatDate(t.due_date)}
                       isOverdue={true}
+                      
                     />
-                  </Link>
+                  </div>
                 ))}
               </div>
             </section>
@@ -178,10 +197,11 @@ function TodayPage() {
               <div className={classes.grid}>
                 {" "}
                 {tasks.today.map((t) => (
-                  <Link
+                  <div
                     key={t.id}
                     to={`/actividad/${t.id}`}
                     className={classes.cardLink}
+                    onClick={() => openModal(t)}
                   >
                     <TaskCard
                       title={t.title}
@@ -189,8 +209,9 @@ function TodayPage() {
                       priority={getPriority(t.task_type)}
                       progress={calculateProgress(t.subtasks)}
                       dueDate={formatDate(t.due_date)}
+                      
                     />
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -206,10 +227,11 @@ function TodayPage() {
               </div>
               <div className={classes.grid}>
                 {tasks.upcoming.map((t) => (
-                  <Link
+                  <div
                     key={t.id}
                     to={`/actividad/${t.id}`}
                     className={classes.cardLink}
+                    onClick={() => openModal(t)}
                   >
                     <TaskCard
                       title={t.title}
@@ -217,8 +239,9 @@ function TodayPage() {
                       priority={getPriority(t.task_type)}
                       progress={calculateProgress(t.subtasks)}
                       dueDate={formatDate(t.due_date)}
+                      
                     />
-                  </Link>
+                  </div>
                 ))}
               </div>
             </section>
@@ -232,18 +255,20 @@ function TodayPage() {
               </div>
               <div className={classes.grid}>
                 {tasks.noDate.map((t) => (
-                  <Link
+                  <div
                     key={t.id}
                     to={`/actividad/${t.id}`}
                     className={classes.cardLink}
+                    onClick={() => openModal(t)}
                   >
                     <TaskCard
                       title={t.title}
                       subject={t.course}
                       priority={getPriority(t.task_type)}
                       compact={true}
+                      
                     />
-                  </Link>
+                  </div>
                 ))}
               </div>
             </section>
@@ -259,11 +284,11 @@ function TodayPage() {
               </div>
               <div className={classes.grid}>
                 {tasks.completed.map((t) => (
-                  <Link
+                  <div
                     key={t.id}
                     to={`/actividad/${t.id}`}
                     className={classes.cardLink}
-                  >
+                  > onClick={() => openModal(t)}
                     <TaskCard
                       title={t.title}
                       subject={t.course}
@@ -271,14 +296,21 @@ function TodayPage() {
                       progress={100}
                       dueDate={formatDate(t.due_date)}
                       isCompleted={true}
+                      
                     />
-                  </Link>
+                  </div>
                 ))}
               </div>
             </section>
           )}
         </div>
       </div>
+      <TaskDetailsModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        task={selectedTask}
+        onEdit={(taskId) => navigate(`/actividad/${taskId}`)}
+      />
     </div>
   );
 }
