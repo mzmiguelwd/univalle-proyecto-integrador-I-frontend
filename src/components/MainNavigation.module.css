@@ -1,5 +1,5 @@
 .nav {
-  background-color: #101922; /* El oscuro de tu HTML original */
+  background-color: #101922;
   color: white;
   position: fixed;
   bottom: 0;
@@ -13,7 +13,7 @@
 }
 
 .logoSection {
-  display: none; /* Oculto en móvil */
+  display: none;
 }
 
 .navList {
@@ -50,6 +50,7 @@
   position: relative;
   top: -20px;
   box-shadow: 0 4px 12px rgba(19, 127, 236, 0.4);
+  text-decoration: none;
 }
 
 @media (min-width: 768px) {

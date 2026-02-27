@@ -35,7 +35,7 @@ function MainNavigation() {
 
       <NavLink to="/crear" className={classes.fab}>
         Nueva Actividad
-        <MdAdd size={32} />
+        <MdAdd size={24} />
       </NavLink>
     </nav>
   );
