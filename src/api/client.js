@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000",
 });
 
 api.interceptors.request.use((config) => {
@@ -9,5 +9,21 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Token ${token}`;
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (
+      error.response &&
+      (error.response.status === 401 || error.response.status === 403)
+    ) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("user_id");
+      window.location.href = "/";
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default api;

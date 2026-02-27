@@ -1,10 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import {
+  MdArrowBack,
+  MdCalendarToday,
+  MdLabel,
+  MdFormatListBulleted,
+  MdEdit,
+  MdDelete,
+  MdClose,
+  MdSave,
+} from "react-icons/md";
 
-import QuickAddSubtask from "../components/QuickAddSubtask";
 import classes from "./TaskDetail.module.css";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { fetchTaskById, updateTask, deleteTask } from "../api/tasks";
+import CreateSubtask from "../components/CreateSubtask";
 
 function sortSubtasksByDate(subtasks) {
   return [...subtasks].sort((a, b) => {
@@ -16,74 +25,109 @@ function sortSubtasksByDate(subtasks) {
 
 function TaskDetailPage() {
   const { id } = useParams();
-  const isDemoMode = id === "demo";
+  const navigate = useNavigate();
 
   const [task, setTask] = useState(null);
   const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (isDemoMode) {
-      setTask({
-        id: "demo",
-        title: "Actividad Demo - US2",
-        course: "Proyecto Integrador I",
-        due_date: new Date().toISOString(),
-      });
-      setSubtasks(
-        sortSubtasksByDate([
-          {
-            id: 9001,
-            name: "Leer requerimientos",
-            target_date: "2026-02-24",
-            estimated_hours: 1.5,
-          },
-        ]),
-      );
-      setLoading(false);
-      setError("");
-      return;
-    }
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editData, setEditData] = useState({
+    title: "",
+    course: "",
+    task_type: "otro",
+    due_date: "",
+    description: "",
+  });
 
-    const fetchTask = async () => {
+  useEffect(() => {
+    const loadTask = async () => {
       setLoading(true);
       setError("");
-
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("No hay sesión activa. Inicia sesión de nuevo.");
-        setLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch(`${API_URL}/api/tasks/${id}/`, {
-          headers: {
-            Authorization: `Token ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data?.detail || "No se pudo cargar la actividad.");
-        }
-
+        const data = await fetchTaskById(id);
         setTask(data);
         setSubtasks(sortSubtasksByDate(data.subtasks || []));
-      } catch (requestError) {
-        setError(requestError.message);
+      } catch (err) {
+        if (err.response && err.response.status === 404) {
+          setError("La actividad que buscas no existe o fue eliminada.");
+        } else {
+          setError(
+            err.response?.data?.detail || "No se pudo cargar la actividad.",
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
+    loadTask();
+  }, [id]);
 
-    fetchTask();
-  }, [id, isDemoMode]);
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de que deseas eliminar esta actividad? Todas sus subtareas se perderán permanentemente.",
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteTask(id);
+      navigate("/hoy");
+    } catch (error) {
+      alert("Hubo un error al intentar eliminar la tarea.");
+    }
+  };
+
+  const formatDateForInput = (isoString) => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+  };
+
+  const startEditing = () => {
+    setEditData({
+      title: task.title,
+      course: task.course,
+      task_type: task.task_type || "otro",
+      due_date: formatDateForInput(task.due_date),
+      description: task.description || "",
+    });
+    setIsEditing(true);
+  };
+
+  const handleEditChange = (e) => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const dataToSubmit = { ...editData };
+      if (!dataToSubmit.due_date) dataToSubmit.due_date = null;
+
+      const updatedTask = await updateTask(id, dataToSubmit);
+      setTask(updatedTask);
+      setIsEditing(false);
+    } catch (error) {
+      alert("Error al actualizar la tarea. Revisa los datos.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const dueDateLabel = useMemo(() => {
     if (!task?.due_date) return "Sin fecha límite";
-    return new Date(task.due_date).toLocaleString("es-CO");
+    return new Date(task.due_date).toLocaleString("es-CO", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }, [task?.due_date]);
 
   const onSubtaskCreated = (newSubtask) => {
@@ -92,58 +136,213 @@ function TaskDetailPage() {
     );
   };
 
-  if (loading) {
+  if (loading)
     return (
-      <p className={classes.message}>Cargando detalle de la actividad...</p>
+      <div className={classes.loadingContainer}>
+        <div className={classes.spinner}></div>
+        <p>Cargando detalles...</p>
+      </div>
     );
-  }
 
-  if (error) {
-    return <p className={classes.error}>{error}</p>;
-  }
-
-  if (!task) {
-    return <p className={classes.error}>No se encontró la actividad.</p>;
-  }
+  if (error || !task)
+    return (
+      <div className={classes.pageWrapper}>
+        <div className={classes.container}>
+          <Link to="/hoy" className={classes.backLink}>
+            ← Volver
+          </Link>
+          <div className={classes.errorCard}>
+            {error || "No se encontró la actividad."}
+          </div>
+        </div>
+      </div>
+    );
 
   return (
-    <div className={classes.wrapper}>
-      <header className={classes.header}>
-        <h1>{task.title}</h1>
-        <p>{task.course}</p>
-        <small>Fecha límite: {dueDateLabel}</small>
-        {isDemoMode ? (
-          <small className={classes.demoHint}>
-            Modo demo activo: no requiere backend ni autenticación.
-          </small>
-        ) : null}
-      </header>
+    <div className={classes.pageWrapper}>
+      <div className={classes.container}>
+        <nav className={classes.navigation}>
+          <Link to="/hoy" className={classes.backLink}>
+            <MdArrowBack className={classes.backIcon} />
+            Volver al panel
+          </Link>
+        </nav>
 
-      <QuickAddSubtask
-        taskId={task.id}
-        onSubtaskCreated={onSubtaskCreated}
-        demoMode={isDemoMode}
-      />
+        {isEditing ? (
+          <header className={classes.headerCard}>
+            <div className={classes.editHeader}>
+              <h2>Editar Actividad</h2>
+              <button
+                className={classes.iconBtn}
+                onClick={() => setIsEditing(false)}
+                title="Cancelar"
+              >
+                <MdClose />
+              </button>
+            </div>
 
-      <section className={classes.subtasksSection}>
-        <h2>Subtareas de la actividad</h2>
+            <form className={classes.editForm} onSubmit={submitEdit}>
+              <input
+                type="text"
+                name="title"
+                value={editData.title}
+                onChange={handleEditChange}
+                required
+                placeholder="Título"
+                className={classes.editInput}
+              />
 
-        {subtasks.length === 0 ? (
-          <p className={classes.message}>Aún no hay subtareas registradas.</p>
+              <div className={classes.editRow}>
+                <input
+                  type="text"
+                  name="course"
+                  value={editData.course}
+                  onChange={handleEditChange}
+                  required
+                  placeholder="Curso"
+                  className={classes.editInput}
+                />
+                <select
+                  name="task_type"
+                  value={editData.task_type}
+                  onChange={handleEditChange}
+                  className={classes.editInput}
+                >
+                  <option value="examen">Examen</option>
+                  <option value="quiz">Quiz</option>
+                  <option value="taller">Taller</option>
+                  <option value="proyecto">Proyecto</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <input
+                type="datetime-local"
+                name="due_date"
+                value={editData.due_date}
+                onChange={handleEditChange}
+                className={classes.editInput}
+              />
+
+              <textarea
+                name="description"
+                value={editData.description}
+                onChange={handleEditChange}
+                placeholder="Descripción..."
+                rows="3"
+                className={classes.editInput}
+              ></textarea>
+
+              <div className={classes.editActions}>
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className={classes.cancelBtn}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className={classes.saveBtn}
+                >
+                  {isSaving ? (
+                    "Guardando..."
+                  ) : (
+                    <>
+                      <MdSave /> Guardar Cambios
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </header>
         ) : (
-          <ul className={classes.subtaskList}>
-            {subtasks.map((subtask) => (
-              <li key={subtask.id} className={classes.subtaskItem}>
-                <div>
-                  <strong>{subtask.name}</strong>
-                  <p>Fecha objetivo: {subtask.target_date}</p>
+          <header className={classes.headerCard}>
+            <div className={classes.headerTop}>
+              <span className={classes.courseTag}>{task.course}</span>
+
+              <div className={classes.actionButtons}>
+                <button
+                  onClick={startEditing}
+                  className={classes.iconBtn}
+                  title="Editar tarea"
+                >
+                  <MdEdit />
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className={`${classes.iconBtn} ${classes.deleteBtn}`}
+                  title="Eliminar tarea"
+                >
+                  <MdDelete />
+                </button>
+              </div>
+            </div>
+
+            <h1 className={classes.title}>{task.title}</h1>
+
+            <div className={classes.metaInfo}>
+              <div className={classes.metaItem}>
+                <MdCalendarToday className={classes.metaIcon} />
+                <span>{dueDateLabel}</span>
+              </div>
+              {task.task_type && (
+                <div className={classes.metaItem}>
+                  <MdLabel className={classes.metaIcon} />
+                  <span className={classes.capitalize}>{task.task_type}</span>
                 </div>
-                <span>{subtask.estimated_hours} h</span>
-              </li>
-            ))}
-          </ul>
+              )}
+            </div>
+
+            {task.description && (
+              <div className={classes.descriptionBox}>
+                <h3>Descripción</h3>
+                <p>{task.description}</p>
+              </div>
+            )}
+          </header>
         )}
-      </section>
+
+        <section className={classes.subtasksSection}>
+          <div className={classes.subtasksHeader}>
+            <h2>Plan de Trabajo (Subtareas)</h2>
+            <span className={classes.subtaskCount}>{subtasks.length}</span>
+          </div>
+
+          <div className={classes.addBox}>
+            <CreateSubtask
+              taskId={task.id}
+              onSubtaskCreated={onSubtaskCreated}
+            />
+          </div>
+          {subtasks.length === 0 ? (
+            <div className={classes.emptyState}>
+              <MdFormatListBulleted className={classes.emptyIcon} />
+              <p>Divide y vencerás. Añade la primera subtarea para empezar.</p>
+            </div>
+          ) : (
+            <ul className={classes.subtaskList}>
+              {subtasks.map((subtask) => (
+                <li key={subtask.id} className={classes.subtaskItem}>
+                  <div className={classes.subtaskLeft}>
+                    <div className={classes.checkboxDummy}></div>
+                    <div>
+                      <strong>{subtask.name}</strong>
+                      <p>Para el {subtask.target_date}</p>
+                    </div>
+                  </div>
+                  <div className={classes.subtaskRight}>
+                    <span className={classes.hoursBadge}>
+                      {subtask.estimated_hours} h
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

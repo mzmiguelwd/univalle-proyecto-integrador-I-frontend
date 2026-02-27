@@ -6,16 +6,17 @@
 
 .content {
   flex: 1;
-  padding-bottom: 80px; /* Espacio para la nav móvil */
+  padding-bottom: 80px;
 }
 
 @media (min-width: 768px) {
   .layout {
     flex-direction: row;
   }
+
   .content {
     padding-bottom: 0;
-    margin-left: 260px; /* Ancho de la sidebar */
+    margin-left: 260px;
     width: calc(100% - 260px);
   }
 }
