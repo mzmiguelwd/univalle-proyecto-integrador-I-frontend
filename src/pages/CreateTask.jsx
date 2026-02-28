@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import classes from "./CreateTask.module.css";
 import { createTask } from "../api/tasks";
@@ -16,6 +17,9 @@ const CreateTask = () => {
     due_date: "",
     description: "",
   });
+
+  const isFormValid =
+    formData.title.trim().length > 0 && formData.course.trim().length > 0;
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -34,6 +38,11 @@ const CreateTask = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isFormValid) {
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -44,6 +53,7 @@ const CreateTask = () => {
 
     try {
       await createTask(dataToSubmit);
+      toast.success("Tarea creada");
       navigate("/hoy");
     } catch (error) {
       let errorMessage =
@@ -142,7 +152,7 @@ const CreateTask = () => {
             <button
               type="submit"
               className={classes.submitBtn}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
             >
               {isLoading ? "Guardando..." : "Crear Actividad"}
             </button>
