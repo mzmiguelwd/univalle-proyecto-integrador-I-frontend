@@ -13,6 +13,7 @@ import TodayPage from "./pages/Today.jsx";
 import CreateTaskPage from "./pages/CreateTask.jsx";
 import TaskDetailPage from "./pages/TaskDetail.jsx";
 import ProgressPage from "./pages/Progress.jsx";
+import ProfilePage from "./pages/Profile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
           { path: "crear", element: <CreateTaskPage /> },
           { path: "actividad/:id", element: <TaskDetailPage /> },
           { path: "progreso", element: <ProgressPage /> },
+          { path: "perfil", element: <ProfilePage /> },
         ],
       },
     ],
