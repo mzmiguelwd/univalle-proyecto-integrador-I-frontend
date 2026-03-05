@@ -12,7 +12,12 @@ import {
 } from "react-icons/md";
 
 import classes from "./TaskDetail.module.css";
-import { fetchTaskById, updateTask, deleteTask } from "../api/tasks";
+import {
+  fetchTaskById,
+  updateTask,
+  deleteTask,
+  fetchDashboardTasks,
+} from "../api/tasks";
 import CreateSubtask from "../components/CreateSubtask";
 
 function sortSubtasksByDate(subtasks) {
@@ -31,6 +36,8 @@ function TaskDetailPage() {
   const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [showCourseSuggestions, setShowCourseSuggestions] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -64,6 +71,19 @@ function TaskDetailPage() {
     };
     loadTask();
   }, [id]);
+
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const data = await fetchDashboardTasks();
+        const courses = [...new Set(data.map((t) => t.course).filter(Boolean))];
+        setAvailableCourses(courses);
+      } catch (error) {
+        console.error("No se pudieron cargar los cursos previos", error);
+      }
+    };
+    loadCourses();
+  }, []);
 
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
@@ -136,6 +156,17 @@ function TaskDetailPage() {
     );
   };
 
+  const filteredCourses = availableCourses.filter((course) =>
+    course.toLowerCase().includes((editData.course || "").toLowerCase()),
+  );
+
+  const handleCourseSelect = (selectedCourse) => {
+    handleEditChange({
+      target: { name: "course", value: selectedCourse },
+    });
+    setShowCourseSuggestions(false);
+  };
+
   if (loading)
     return (
       <div className={classes.loadingContainer}>
@@ -193,15 +224,44 @@ function TaskDetailPage() {
               />
 
               <div className={classes.editRow}>
-                <input
-                  type="text"
-                  name="course"
-                  value={editData.course}
-                  onChange={handleEditChange}
-                  required
-                  placeholder="Curso"
-                  className={classes.editInput}
-                />
+                <div className={classes.autocompleteWrapper}>
+                  <input
+                    type="text"
+                    name="course"
+                    value={editData.course}
+                    onChange={(e) => {
+                      handleEditChange(e);
+                      setShowCourseSuggestions(true);
+                    }}
+                    onFocus={() => setShowCourseSuggestions(true)}
+                    onClick={() => setShowCourseSuggestions(true)}
+                    onBlur={() =>
+                      setTimeout(() => setShowCourseSuggestions(false), 150)
+                    }
+                    required
+                    placeholder="Curso"
+                    autoComplete="off"
+                    className={classes.editInput}
+                  />
+
+                  {showCourseSuggestions && filteredCourses.length > 0 && (
+                    <ul className={classes.suggestionsList}>
+                      {filteredCourses.map((course) => (
+                        <li
+                          key={course}
+                          className={classes.suggestionItem}
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            handleCourseSelect(course);
+                          }}
+                        >
+                          {course}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
                 <select
                   name="task_type"
                   value={editData.task_type}

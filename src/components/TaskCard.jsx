@@ -1,4 +1,9 @@
-import { MdMoreVert, MdCheckCircle, MdCalendarToday } from "react-icons/md";
+import {
+  MdMoreVert,
+  MdCheckCircle,
+  MdCalendarToday,
+  MdAccessTime,
+} from "react-icons/md";
 
 import classes from "./TaskCard.module.css";
 
@@ -7,7 +12,8 @@ function TaskCard({
   subject,
   priority,
   progress,
-  dueDate,
+  nextDelivery,
+  finalDelivery,
   isCompleted,
   isOverdue,
   compact,
@@ -45,15 +51,31 @@ function TaskCard({
 
       {!compact && (
         <footer className={classes.footer}>
-          <div className={classes.info}>
-            <span className={classes.infoIcon}>
-              {isCompleted ? (
-                <MdCheckCircle className={classes.checkIcon} />
-              ) : (
-                <MdCalendarToday className={classes.calendarIcon} />
-              )}
-            </span>
-            <span>{dueDate}</span>
+          <div className={classes.dateSection}>
+            <div className={classes.info}>
+              <span className={classes.infoIcon}>
+                <MdAccessTime
+                  className={classes.calendarIcon}
+                  style={{ color: "#d97706" }}
+                />
+              </span>
+              <span style={{ fontSize: "0.8rem" }}>
+                <strong>Próxima entrega:</strong> {nextDelivery}
+              </span>
+            </div>
+
+            <div className={classes.info}>
+              <span className={classes.infoIcon}>
+                {isCompleted ? (
+                  <MdCheckCircle className={classes.checkIcon} />
+                ) : (
+                  <MdCalendarToday className={classes.calendarIcon} />
+                )}
+              </span>
+              <span style={{ fontSize: "0.8rem" }}>
+                <strong>Entrega final:</strong> {finalDelivery}
+              </span>
+            </div>
           </div>
 
           <div className={classes.progressSection}>
