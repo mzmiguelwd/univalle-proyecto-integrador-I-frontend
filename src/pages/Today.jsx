@@ -1,16 +1,27 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MdLogout } from "react-icons/md";
+import { MdLogout, MdFilterList } from "react-icons/md";
 
 import classes from "./Today.module.css";
 import { fetchDashboardTasks } from "../api/tasks";
 import { logoutUser } from "../api/auth";
 import TaskCard from "../components/TaskCard";
-
 import TaskDetailsModal from "../components/TaskDetailsModal";
 
-
 function TodayPage() {
+  const navigate = useNavigate();
+  const username = localStorage.getItem("username") || "Usuario";
+
+  // Data states
+  const [rawTasks, setRawTasks] = useState([]);
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+
+  // Categorized state (what is rendered on the page)
   const [tasks, setTasks] = useState({
     overdue: [],
     today: [],
@@ -18,11 +29,8 @@ function TodayPage() {
     noDate: [],
     completed: [],
   });
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const username = localStorage.getItem("username") || "Usuario";
 
-  // Modal state
+  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
@@ -47,42 +55,10 @@ function TodayPage() {
       try {
         setLoading(true);
         const data = await fetchDashboardTasks();
+        setRawTasks(data);
 
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const categorized = {
-          overdue: [],
-          today: [],
-          upcoming: [],
-          noDate: [],
-          completed: [],
-        };
-
-        data.forEach((task) => {
-          if (task.is_completed) {
-            categorized.completed.push(task);
-            return;
-          }
-
-          if (!task.due_date) {
-            categorized.noDate.push(task);
-            return;
-          }
-
-          const taskDate = new Date(task.due_date);
-          taskDate.setHours(0, 0, 0, 0);
-
-          if (taskDate < today) {
-            categorized.overdue.push(task);
-          } else if (taskDate.getTime() === today.getTime()) {
-            categorized.today.push(task);
-          } else {
-            categorized.upcoming.push(task);
-          }
-        });
-
-        setTasks(categorized);
+        const courses = [...new Set(data.map((task) => task.course))];
+        setAvailableCourses(courses);
       } catch (error) {
         console.error(error);
       } finally {
@@ -91,14 +67,17 @@ function TodayPage() {
     })();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await logoutUser();
-    navigate("/");
+  const getPriority = (taskType) => {
+    if (taskType === "examen" || taskType === "proyecto") return "Alta";
+    if (taskType === "quiz") return "Media";
+    return "Baja";
   };
 
   const calculateProgress = (subtasks) => {
     if (!subtasks || subtasks.length === 0) return 0;
-    const completed = subtasks.filter((st) => st.is_completed).length;
+    const completed = subtasks.filter(
+      (subtask) => subtask.status == "done",
+    ).length;
     return Math.round((completed / subtasks.length) * 100);
   };
 
@@ -112,10 +91,68 @@ function TodayPage() {
     });
   };
 
-  const getPriority = (taskType) => {
-    if (taskType === "examen" || taskType === "proyecto") return "Alta";
-    if (taskType === "quiz") return "Media";
-    return "Baja";
+  const getNextDeliveryDate = (subtasks) => {
+    if (!subtasks || subtasks.length === 0) return "Sin planificar";
+    const pendingSubtasks = subtasks.filter(
+      (subtask) => subtask.status !== "done",
+    );
+    if (pendingSubtasks.length === 0) return "Todo completado";
+
+    pendingSubtasks.sort(
+      (a, b) => new Date(a.target_date) - new Date(b.target_date),
+    );
+    return formatDate(pendingSubtasks[0].target_date);
+  };
+
+  useEffect(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const categorized = {
+      overdue: [],
+      today: [],
+      upcoming: [],
+      noDate: [],
+      completed: [],
+    };
+
+    rawTasks.forEach((task) => {
+      const priorityMatch =
+        priorityFilter === "all" ||
+        getPriority(task.task_type) === priorityFilter;
+      const courseMatch =
+        courseFilter === "all" || task.course === courseFilter;
+
+      if (!priorityMatch || !courseMatch) return;
+
+      if (task.is_completed) {
+        categorized.completed.push(task);
+        return;
+      }
+
+      if (!task.due_date) {
+        categorized.noDate.push(task);
+        return;
+      }
+
+      const taskDate = new Date(task.due_date);
+      taskDate.setHours(0, 0, 0, 0);
+
+      if (taskDate < today) {
+        categorized.overdue.push(task);
+      } else if (taskDate.getTime() === today.getTime()) {
+        categorized.today.push(task);
+      } else {
+        categorized.upcoming.push(task);
+      }
+    });
+
+    setTasks(categorized);
+  }, [rawTasks, courseFilter, priorityFilter]);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/");
   };
 
   const activeTasksCount = tasks.today.length + tasks.overdue.length;
@@ -147,9 +184,38 @@ function TodayPage() {
             aria-label="Cerrar sesión"
           >
             {<MdLogout className={classes.logoutIcon} />}
-            Salir
+            Cerrar sesión
           </button>
         </header>
+
+        <section className={classes.filtersSection}>
+          <div className={classes.filterGroup}>
+            <MdFilterList className={classes.filterIcon} />
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className={classes.filterSelect}
+            >
+              <option value="all">Todas las asignaturas</option>
+              {availableCourses.map((course) => (
+                <option key={course} value={course}>
+                  {course}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className={classes.filterSelect}
+            >
+              <option value="all">Todas las prioridades</option>
+              <option value="Alta">Prioridad Alta</option>
+              <option value="Media">Prioridad Media</option>
+              <option value="Baja">Prioridad Baja</option>
+            </select>
+          </div>
+        </section>
 
         <div className={classes.dashboardContent}>
           {tasks.overdue.length > 0 && (
@@ -161,12 +227,10 @@ function TodayPage() {
                 </span>
               </div>
               <div className={classes.grid}>
-                {" "}
                 {tasks.overdue.map((t) => (
                   <div
                     key={t.id}
-                    to={`/actividad/${t.id}`}
-                    className={classes.cardLink}
+                    className={classes.Link}
                     onClick={() => openModal(t)}
                   >
                     <TaskCard
@@ -174,9 +238,9 @@ function TodayPage() {
                       subject={t.course}
                       priority={getPriority(t.task_type)}
                       progress={calculateProgress(t.subtasks)}
-                      dueDate={formatDate(t.due_date)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
                       isOverdue={true}
-                      
                     />
                   </div>
                 ))}
@@ -195,11 +259,9 @@ function TodayPage() {
               </div>
             ) : (
               <div className={classes.grid}>
-                {" "}
                 {tasks.today.map((t) => (
                   <div
                     key={t.id}
-                    to={`/actividad/${t.id}`}
                     className={classes.cardLink}
                     onClick={() => openModal(t)}
                   >
@@ -208,8 +270,8 @@ function TodayPage() {
                       subject={t.course}
                       priority={getPriority(t.task_type)}
                       progress={calculateProgress(t.subtasks)}
-                      dueDate={formatDate(t.due_date)}
-                      
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
                     />
                   </div>
                 ))}
@@ -229,7 +291,6 @@ function TodayPage() {
                 {tasks.upcoming.map((t) => (
                   <div
                     key={t.id}
-                    to={`/actividad/${t.id}`}
                     className={classes.cardLink}
                     onClick={() => openModal(t)}
                   >
@@ -238,8 +299,8 @@ function TodayPage() {
                       subject={t.course}
                       priority={getPriority(t.task_type)}
                       progress={calculateProgress(t.subtasks)}
-                      dueDate={formatDate(t.due_date)}
-                      
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
                     />
                   </div>
                 ))}
@@ -257,7 +318,6 @@ function TodayPage() {
                 {tasks.noDate.map((t) => (
                   <div
                     key={t.id}
-                    to={`/actividad/${t.id}`}
                     className={classes.cardLink}
                     onClick={() => openModal(t)}
                   >
@@ -265,8 +325,9 @@ function TodayPage() {
                       title={t.title}
                       subject={t.course}
                       priority={getPriority(t.task_type)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
                       compact={true}
-                      
                     />
                   </div>
                 ))}
@@ -277,7 +338,7 @@ function TodayPage() {
           {tasks.completed.length > 0 && (
             <section className={classes.taskSection}>
               <div className={classes.sectionHeader}>
-                <h2 className={classes.sectionTitle}>✅ Completadas Hoy</h2>
+                <h2 className={classes.sectionTitle}>✅ Completadas</h2>
                 <span className={classes.taskCount}>
                   {tasks.completed.length}
                 </span>
@@ -286,17 +347,17 @@ function TodayPage() {
                 {tasks.completed.map((t) => (
                   <div
                     key={t.id}
-                    to={`/actividad/${t.id}`}
                     className={classes.cardLink}
-                  > onClick={() => openModal(t)}
+                    onClick={() => openModal(t)}
+                  >
                     <TaskCard
                       title={t.title}
                       subject={t.course}
                       priority={getPriority(t.task_type)}
                       progress={100}
-                      dueDate={formatDate(t.due_date)}
+                      nextDelivery={"---"}
+                      finalDelivery={formatDate(t.due_date)}
                       isCompleted={true}
-                      
                     />
                   </div>
                 ))}
