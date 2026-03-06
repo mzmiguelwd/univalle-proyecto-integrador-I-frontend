@@ -3,6 +3,7 @@ import {
   createBrowserRouter,
   Navigate,
 } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 
 import ErrorPage from "./pages/Error.jsx";
 import LoginPage from "./pages/auth/Login.jsx";
@@ -12,6 +13,7 @@ import TodayPage from "./pages/Today.jsx";
 import CreateTaskPage from "./pages/CreateTask.jsx";
 import TaskDetailPage from "./pages/TaskDetail.jsx";
 import ProgressPage from "./pages/Progress.jsx";
+import ProfilePage from "./pages/Profile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -28,6 +30,7 @@ const router = createBrowserRouter([
           { path: "crear", element: <CreateTaskPage /> },
           { path: "actividad/:id", element: <TaskDetailPage /> },
           { path: "progreso", element: <ProgressPage /> },
+          { path: "perfil", element: <ProfilePage /> },
         ],
       },
     ],
@@ -35,7 +38,12 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster position="top-center" />
+      <RouterProvider router={router} />
+    </>
+  );
 }
 
 export default App;

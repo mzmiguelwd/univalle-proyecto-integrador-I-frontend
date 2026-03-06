@@ -1,15 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
 import { MdFormatListBulleted } from "react-icons/md";
+import toast from "react-hot-toast";
 
 import classes from "./CreateTask.module.css";
-import { createTask } from "../api/tasks";
+import { createTask, fetchDashboardTasks } from "../api/tasks";
 import CreateSubtask from "../components/CreateSubtask";
+
 
 const CreateTask = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const [availableCourses, setAvailableCourses] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -20,6 +26,24 @@ const CreateTask = () => {
   });
 
   const [subtasks, setSubtasks] = useState([]);
+  
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const data = await fetchDashboardTasks();
+        const courses = [
+          ...new Set(data.map((task) => task.course).filter(Boolean)),
+        ];
+        setAvailableCourses(courses);
+      } catch (error) {
+        console.error("No se pudieron cargar los cursos previos", error);
+      }
+    };
+    loadCourses();
+  }, []);
+
+  const isFormValid =
+    formData.title.trim().length > 0 && formData.course.trim().length > 0;
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -27,6 +51,18 @@ const CreateTask = () => {
       ...prevData,
       [name]: value,
     }));
+  };
+
+  const filteredCourses = availableCourses.filter((course) =>
+    course.toLowerCase().includes(formData.course.toLowerCase()),
+  );
+
+  const handleCourseSelect = (selectedCourse) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      course: selectedCourse,
+    }));
+    setShowSuggestions(false);
   };
 
   const handleTypeSelect = (type) => {
@@ -42,6 +78,9 @@ const CreateTask = () => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!isFormValid) return;
+
     setIsLoading(true);
     setError(null);
 
@@ -55,6 +94,7 @@ const CreateTask = () => {
 
     try {
       await createTask(dataToSubmit);
+      toast.success("Tarea creada");
       navigate("/hoy");
     } catch (error) {
       let errorMessage =
@@ -87,8 +127,9 @@ const CreateTask = () => {
           {error && <div className={classes.errorBox}>{error}</div>}
 
           <div className={classes.formGroup}>
-            <label>Título de la actividad *</label>
+            <label htmlFor="title">Título de la actividad *</label>
             <input
+              id="title"
               type="text"
               name="title"
               value={formData.title}
@@ -99,15 +140,45 @@ const CreateTask = () => {
           </div>
 
           <div className={classes.formGroup}>
-            <label>Curso / Asignatura *</label>
-            <input
-              type="text"
-              name="course"
-              value={formData.course}
-              onChange={handleChange}
-              placeholder="Ej: Proyecto Integrador I"
-              required
-            />
+            <label htmlFor="course">Curso / Asignatura *</label>
+            <div className={classes.autocompleteWrapper}>
+              <input
+                id="course"
+                type="text"
+                name="course"
+                value={formData.course}
+                onChange={(e) => {
+                  handleChange(e);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onClick={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                placeholder="Ej: Proyecto Integrador I"
+                autoComplete="off"
+                required
+              />
+
+              {showSuggestions && filteredCourses.length > 0 && (
+                <ul className={classes.suggestionsList}>
+                  {filteredCourses.map((course) => (
+                    <li
+                      key={course}
+                      className={classes.suggestionItem}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleCourseSelect(course);
+                      }}
+                    >
+                      {course}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <span className={classes.helpText}>
+              Selecciona uno existente o escribe uno nuevo.
+            </span>
           </div>
 
           <div className={classes.formGroup}>
@@ -129,8 +200,9 @@ const CreateTask = () => {
           </div>
 
           <div className={classes.formGroup}>
-            <label>Fecha y hora límite (Opcional)</label>
+            <label htmlFor="due_date">Fecha y hora límite (Opcional)</label>
             <input
+              id="due_date"
               type="datetime-local"
               name="due_date"
               value={formData.due_date}
@@ -139,8 +211,9 @@ const CreateTask = () => {
           </div>
 
           <div className={classes.formGroup}>
-            <label>Descripción (Opcional)</label>
+            <label htmlFor="description">Descripción (Opcional)</label>
             <textarea
+              id="description"
               name="description"
               value={formData.description}
               onChange={handleChange}
@@ -190,7 +263,7 @@ const CreateTask = () => {
             <button
               type="submit"
               className={classes.submitBtn}
-              disabled={isLoading}
+              disabled={isLoading || !isFormValid}
             >
               {isLoading ? "Guardando..." : "Crear Actividad"}
             </button>
