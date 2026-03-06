@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import classes from "./TaskDetailsModal.module.css";
 import api from "../api/client";
+import { FiEdit2 } from "react-icons/fi";
 
 export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
   const [subtasks, setSubtasks] = useState([]);
@@ -71,9 +72,17 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
             <p className={classes.meta}>
               {task.course ? `Materia: ${task.course}` : "Sin materia"} •{" "}
               {subtasks.length
-                ? `${completedCount}/${subtasks.length} (${progress}%)`
-                : "0%"}
+                ? `${completedCount}/${subtasks.length} ` : "0/0"}
             </p>
+            <div className={classes.progressBlock}>
+              <div className={classes.progressTrack}>
+                <div
+                  className={classes.progressFill}
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <span className={classes.progressText}>{progress}% completado</span>
+            </div>
           </div>
 
           <button

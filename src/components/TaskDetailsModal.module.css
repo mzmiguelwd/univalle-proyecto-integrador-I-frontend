@@ -174,3 +174,29 @@
   opacity: 0.65;
   cursor: not-allowed;
 }
+
+.progressBlock {
+  margin-top: 12px;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff7a59, #ffb36b);
+  transition: width 0.25s ease;
+}
+
+.progressText {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.72);
+}
