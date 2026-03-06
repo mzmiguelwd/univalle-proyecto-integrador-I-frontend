@@ -31,45 +31,57 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
       return;
     }
 
-    setIsSubmitting(true);
+    const subtaskData = {
+    name: name.trim(),
+    target_date: targetDate,
+    estimated_hours: parsedHours,
+    };
 
-    try {
-      const newSubtask = await createSubtask({
-        task: taskId,
-        name: name.trim(),
-        target_date: targetDate,
-        estimated_hours: parsedHours,
-      });
+    if (taskId) {
+      try {
+        setIsSubmitting(true);
 
-      onSubtaskCreated(newSubtask);
+        const newSubtask = await createSubtask({
+          task: taskId,
+          ...subtaskData,
+        });
 
-      setName("");
-      setEstimatedHours("");
-      setError("");
-    } catch (error) {
-      let errorMessage = "No fue posible guardar la subtarea.";
-      if (error.response && error.response.data) {
-        const data = error.response.data;
-        const errorKeys = Object.keys(data);
-        if (errorKeys.length > 0) {
-          const firstError = data[errorKeys[0]];
-          if (Array.isArray(firstError)) {
-            errorMessage = firstError[0];
-          } else if (typeof firstError === "string") {
-            errorMessage = firstError;
+        onSubtaskCreated?.(newSubtask);
+
+      } catch (error) {
+        let errorMessage = "No fue posible guardar la subtarea.";
+        if (error.response && error.response.data) {
+          const data = error.response.data;
+          const errorKeys = Object.keys(data);
+          if (errorKeys.length > 0) {
+            const firstError = data[errorKeys[0]];
+            if (Array.isArray(firstError)) {
+              errorMessage = firstError[0];
+            } else if (typeof firstError === "string") {
+              errorMessage = firstError;
+            }
           }
         }
+        setError(errorMessage);
+      } finally {
+        setIsSubmitting(false);
       }
-      setError(errorMessage);
-    } finally {
-      setIsSubmitting(false);
+    }else {
+      onSubtaskCreated({
+       ...subtaskData,
+        id: Date.now(), // id temporal para React
+      });
     }
+
+    setName("");
+    setTargetDate("");
+    setEstimatedHours("");
   };
 
   return (
     <section className={classes.box}>
       <h2 className={classes.title}>Agregar subtarea rápida</h2>
-      <form className={classes.form} onSubmit={handleSubmit}>
+      <div className={classes.form}>
         <div className={classes.inputWrapper}>
           <MdTaskAlt className={classes.icon} />
           <input
@@ -103,6 +115,7 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
 
         <button
           type="submit"
+          onClick={handleSubmit}
           disabled={isSubmitting}
           className={classes.submitBtn}
         >
@@ -115,7 +128,7 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
             </>
           )}
         </button>
-      </form>
+      </div>
 
       {error && <div className={classes.errorBox}>{error}</div>}
     </section>

@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MdFormatListBulleted } from "react-icons/md";
 
 import classes from "./CreateTask.module.css";
 import { createTask } from "../api/tasks";
+import CreateSubtask from "../components/CreateSubtask";
 
 const CreateTask = () => {
   const navigate = useNavigate();
@@ -16,6 +18,8 @@ const CreateTask = () => {
     due_date: "",
     description: "",
   });
+
+  const [subtasks, setSubtasks] = useState([]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -32,12 +36,19 @@ const CreateTask = () => {
     }));
   };
 
+  const onSubtaskCreated = (subtask) => {
+    setSubtasks((prev) => [...prev, subtask]);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
 
-    const dataToSubmit = { ...formData };
+    const dataToSubmit = {
+      ...formData,
+      subtasks: subtasks,
+    };
     if (!dataToSubmit.due_date) {
       dataToSubmit.due_date = null;
     }
@@ -137,6 +148,43 @@ const CreateTask = () => {
               rows="4"
             ></textarea>
           </div>
+
+          <section className={classes.subtasksSection}>
+            <div className={classes.subtasksHeader}>
+              <h2>Plan de Trabajo (Subtareas)</h2>
+              <span className={classes.subtaskCount}>{subtasks.length}</span>
+            </div>
+
+            <div className={classes.addBox}>
+              <CreateSubtask onSubtaskCreated={onSubtaskCreated} />
+            </div>
+
+            {subtasks.length === 0 ? (
+              <div className={classes.emptyState}>
+                <MdFormatListBulleted className={classes.emptyIcon} />
+                <p>Divide y vencerás. Añade la primera subtarea para empezar.</p>
+              </div>
+            ) : (
+              <ul className={classes.subtaskList}>
+                {subtasks.map((subtask) => (
+                  <li key={subtask.id} className={classes.subtaskItem}>
+                    <div className={classes.subtaskLeft}>
+                      <div className={classes.checkboxDummy}></div>
+                      <div>
+                        <strong>{subtask.name}</strong>
+                        <p>Para el {subtask.target_date}</p>
+                      </div>
+                    </div>
+                    <div className={classes.subtaskRight}>
+                      <span className={classes.hoursBadge}>
+                        {subtask.estimated_hours} h
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <div className={classes.actions}>
             <button
