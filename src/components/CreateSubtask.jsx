@@ -11,6 +11,13 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const parsedHours = Number(estimatedHours);
+  const isFormValid =
+    name.trim().length > 0 &&
+    Boolean(targetDate) &&
+    Number.isFinite(parsedHours) &&
+    parsedHours > 0;
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -25,7 +32,6 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
       return;
     }
 
-    const parsedHours = Number(estimatedHours);
     if (!Number.isFinite(parsedHours) || parsedHours <= 0) {
       setError("Las horas estimadas deben ser mayores a 0.");
       return;
@@ -103,7 +109,7 @@ function CreateSubtask({ taskId, onSubtaskCreated }) {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isFormValid}
           className={classes.submitBtn}
         >
           {isSubmitting ? (
