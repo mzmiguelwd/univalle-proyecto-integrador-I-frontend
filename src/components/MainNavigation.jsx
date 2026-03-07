@@ -17,6 +17,11 @@ function MainNavigation() {
         <span className={classes.logoText}>SPlanner</span>
       </div>
 
+      <NavLink to="/crear" className={classes.fab}>
+        Nueva Actividad
+        <MdAdd size={24} />
+      </NavLink>
+
       <ul className={classes.navList}>
         {navItems.map((item) => (
           <li key={item.to}>
@@ -33,10 +38,6 @@ function MainNavigation() {
         ))}
       </ul>
 
-      <NavLink to="/crear" className={classes.fab}>
-        Nueva Actividad
-        <MdAdd size={24} />
-      </NavLink>
     </nav>
   );
 }
