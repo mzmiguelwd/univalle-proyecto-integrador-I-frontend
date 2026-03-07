@@ -123,6 +123,7 @@ const CreateTask = () => {
       <div className={classes.card}>
         <form className={classes.form} onSubmit={handleSubmit}>
           <h2 className={classes.title}>Nueva Actividad</h2>
+          <p className={classes.requiredNote}>Los campos con * son obligatorios.</p>
 
           {error && <div className={classes.errorBox}>{error}</div>}
 
