@@ -25,17 +25,24 @@
 .header {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   align-items: flex-start;
+}
+
+.headerMain {
+  flex: 1;
+  min-width: 0;
 }
 
 .title {
   margin: 0;
-  font-size: 18px;
+  font-size: 2rem;
+  font-weight: 700;
+  flex: 1;
 }
 
 .meta {
-  margin: 6px 0 0;
+  margin: 10px 0 8px;
   opacity: 0.75;
   font-size: 13px;
 }
@@ -199,4 +206,237 @@
   margin-top: 8px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.72);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.titleInput {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: white;
+  width: 100%;
+}
+
+.titleInput {
+  font-size: 1.6rem;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  outline: none;
+  color: white;
+  width: 100%;
+}
+
+.titleInput:focus {
+  border-color: rgba(255,255,255,0.5);
+}
+
+.descriptionInput {
+  width: 100%;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+  resize: vertical;
+}
+
+.descriptionInput:focus {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+/* ESTILOS DEL BADGE BOTON */
+
+.statusBadge {
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.statusBadge:hover {
+  transform: translateY(-1px);
+}
+
+.statusPending {
+  background: rgba(255, 166, 0, 0.12);
+  border-color: rgba(255, 166, 0, 0.35);
+  color: #ffb347;
+}
+
+.statusDone {
+  background: rgba(80, 200, 120, 0.12);
+  border-color: rgba(80, 200, 120, 0.35);
+  color: #6ee7a0;
+}
+
+.addSubtaskBlock {
+  margin-top: 12px;
+}
+
+.addSubtaskBtn {
+  width: 100%;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.addSubtaskBtn:hover {
+  border-color: rgba(255, 255, 255, 0.32);
+  color: #fff;
+}
+
+.subtaskInput {
+  width: 100%;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.subtaskInput:focus {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.newSubtaskForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subtaskMetaRow {
+  display: flex;
+  gap: 10px;
+}
+
+.subtaskDate {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 8px;
+  color: white;
+}
+
+.subtaskHours {
+  width: 80px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px;
+  padding: 8px;
+  color: white;
+}
+
+.subtaskMeta {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.subtaskMetaItem {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.deleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 80, 80, 0.18);
+  border-radius: 8px;
+  background: transparent;
+  color: #ff8a8a;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.deleteBtn:hover {
+  border-color: rgba(255, 80, 80, 0.38);
+  color: #ffb3b3;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.subtaskRow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subtaskTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.subtaskLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.subtaskActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.statusBadgeWide {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 14px;
 }
