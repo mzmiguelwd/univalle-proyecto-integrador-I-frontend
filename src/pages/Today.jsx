@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MdLogout, MdFilterList } from "react-icons/md";
 
@@ -34,14 +34,30 @@ function TodayPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
 
+  const loadDashboardTasks = useCallback(async () => {
+    const data = await fetchDashboardTasks();
+    setRawTasks(data);
+
+    const courses = [...new Set(data.map((task) => task.course))];
+    setAvailableCourses(courses);
+  }, []);
+
   const openModal = (task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
   };
 
-  const closeModal = () => {
+  const closeModal = async (shouldRefresh = false) => {
     setIsModalOpen(false);
     setSelectedTask(null);
+
+    if (!shouldRefresh) return;
+
+    try {
+      await loadDashboardTasks();
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   useEffect(() => {
@@ -54,18 +70,14 @@ function TodayPage() {
     (async () => {
       try {
         setLoading(true);
-        const data = await fetchDashboardTasks();
-        setRawTasks(data);
-
-        const courses = [...new Set(data.map((task) => task.course))];
-        setAvailableCourses(courses);
+        await loadDashboardTasks();
       } catch (error) {
         console.error(error);
       } finally {
         setLoading(false);
       }
     })();
-  }, [navigate]);
+  }, [navigate, loadDashboardTasks]);
 
   const getPriority = (taskType) => {
     if (taskType === "examen" || taskType === "proyecto") return "Alta";

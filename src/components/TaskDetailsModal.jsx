@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import classes from "./TaskDetailsModal.module.css";
 import api from "../api/client";
-import { FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEdit2, FiSave, FiTrash2 } from "react-icons/fi";
 
 export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
   const [subtasks, setSubtasks] = useState([]);
@@ -16,6 +16,10 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
   const [creatingSubtask, setCreatingSubtask] = useState(false);
   const [newSubtaskDate, setNewSubtaskDate] = useState("");
   const [newSubtaskHours, setNewSubtaskHours] = useState("");
+  const [editingSubtaskId, setEditingSubtaskId] = useState(null);
+  const [editingSubtaskValue, setEditingSubtaskValue] = useState("");
+  const [savingSubtaskId, setSavingSubtaskId] = useState(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     setLocalTask(task);
@@ -25,15 +29,24 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
     if (!isOpen) return;
     setError("");
     setBusyId(null);
+    setHasChanges(false);
+    setEditingSection(null);
+    setEditingValue("");
+    setEditingSubtaskId(null);
+    setEditingSubtaskValue("");
     setSubtasks(Array.isArray(task?.subtasks) ? task.subtasks : []);
   }, [isOpen, task]);
 
+  const handleRequestClose = () => {
+    onClose?.(hasChanges);
+  };
+
   useEffect(() => {
     if (!isOpen) return;
-    const onKeyDown = (e) => e.key === "Escape" && onClose?.();
+    const onKeyDown = (e) => e.key === "Escape" && handleRequestClose();
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, hasChanges]);
 
   const progress = useMemo(() => {
     if (!subtasks.length) return 0;
@@ -58,6 +71,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
     try {
       //
       await api.patch(`/api/subtasks/${st.id}/`, { is_completed: next });
+      setHasChanges(true);
     } catch (e) {
       // rollback
       setSubtasks((prev) =>
@@ -73,12 +87,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
 
   const completedCount = subtasks.filter((s) => s.is_completed).length;
 
-  console.log("SUBTASKS EN MODAL:", task?.subtasks);
-  console.log("PRIMERA SUBTASK:", task?.subtasks?.[0]);
-
-  
-
-  const handleEditSection = (section, payload = null) => {
+  const handleEditSection = (section) => {
     setEditingSection(section);
 
     if (section === "title") {
@@ -88,8 +97,6 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
     if (section === "description") {
       setEditingValue(localTask?.description || "");
     }
-
-    console.log("Editar sección:", section, payload);
   };
 
   const handleSaveTitle = async () => {
@@ -110,6 +117,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
         ...prev,
         title: trimmedValue,
       }));
+      setHasChanges(true);
     } catch (err) {
       console.error("Error actualizando título:", err);
     } finally {
@@ -129,6 +137,7 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
         ...prev,
         description: trimmedValue,
       }));
+      setHasChanges(true);
     } catch (err) {
       console.error("Error actualizando descripción:", err);
     } finally {
@@ -136,10 +145,46 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
     }
   };
 
-  const getSubtaskStatusLabel = (st) => {
-    return st.is_completed ? "Completado" : "Pendiente";
+  const handleStartEditSubtask = (st) => {
+    if (!st?.id) return;
+    setEditingSubtaskId(st.id);
+    setEditingSubtaskValue(st.name || "");
   };
 
+  const handleSaveSubtask = async (st) => {
+    if (!st?.id) return;
+
+    const trimmedName = editingSubtaskValue.trim();
+    if (!trimmedName || savingSubtaskId) return;
+
+    setSavingSubtaskId(st.id);
+    setError("");
+
+    try {
+      await api.patch(`/api/subtasks/${st.id}/`, { name: trimmedName });
+
+      setSubtasks((prev) =>
+        prev.map((item) =>
+          item.id === st.id ? { ...item, name: trimmedName } : item,
+        ),
+      );
+      setHasChanges(true);
+
+      setEditingSubtaskId(null);
+      setEditingSubtaskValue("");
+    } catch (err) {
+      console.error("Error actualizando subtarea:", err);
+      setError("No se pudo guardar el nombre de la subtarea.");
+    } finally {
+      setSavingSubtaskId(null);
+    }
+  };
+
+  const getSubtaskStatusLabel = (st) => {
+    return st.is_completed
+      ? "Completado"
+      : "Pendiente (presiona para completar)";
+  };
 
   const handleAddSubtask = async () => {
     const trimmedValue = newSubtaskName.trim();
@@ -160,18 +205,18 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
         original_target_date: date,
         estimated_hours: hours,
         status: "pending",
-        note: ""
+        note: "",
       });
 
       const createdSubtask = response.data;
 
       setSubtasks((prev) => [...prev, createdSubtask]);
+      setHasChanges(true);
 
       setNewSubtaskName("");
       setNewSubtaskDate("");
       setNewSubtaskHours("");
       setIsAddingSubtask(false);
-
     } catch (err) {
       console.error("Error creando subtarea:", err);
       setError("No se pudo crear la subtarea.");
@@ -197,24 +242,25 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
     try {
       await api.delete(`/api/subtasks/${st.id}/`);
 
-      setSubtasks((prev) =>
-        prev.filter((sub) => sub.id !== st.id)
-      );
-
+      setSubtasks((prev) => prev.filter((sub) => sub.id !== st.id));
+      setHasChanges(true);
     } catch (err) {
       console.error("Error eliminando subtarea:", err);
       setError("No se pudo eliminar la subtarea.");
     }
   };
- 
-  
-  return (
 
-    
-    <div className={classes.backdrop} onMouseDown={onClose}>
+  const handleCancelAddSubtask = () => {
+    setIsAddingSubtask(false);
+    setNewSubtaskName("");
+    setNewSubtaskDate("");
+    setNewSubtaskHours("");
+  };
+
+  return (
+    <div className={classes.backdrop} onMouseDown={handleRequestClose}>
       <div className={classes.modal} onMouseDown={(e) => e.stopPropagation()}>
         <div className={classes.header}>
-
           <div className={classes.headerMain}>
             <div className={classes.row}>
               {editingSection === "title" ? (
@@ -232,16 +278,24 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                       setEditingSection(null);
                     }
                   }}
-                  onBlur={handleSaveTitle}
                 />
               ) : (
                 <h2 className={classes.title}>{localTask?.title}</h2>
               )}
               <button
                 className={classes.editBtn}
-                onClick={() => handleEditSection("title")}
+                onClick={() =>
+                  editingSection === "title"
+                    ? handleSaveTitle()
+                    : handleEditSection("title")
+                }
+                aria-label={
+                  editingSection === "title"
+                    ? "Guardar título"
+                    : "Editar título"
+                }
               >
-                <FiEdit2 />
+                {editingSection === "title" ? <FiSave /> : <FiEdit2 />}
               </button>
             </div>
 
@@ -265,12 +319,11 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
 
           <button
             className={classes.closeBtn}
-            onClick={onClose}
+            onClick={handleRequestClose}
             aria-label="Cerrar"
           >
             ✕
           </button>
-
         </div>
 
         <div className={classes.section}>
@@ -279,9 +332,18 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
 
             <button
               className={classes.editBtn}
-              onClick={() => handleEditSection("description")}
+              onClick={() =>
+                editingSection === "description"
+                  ? handleSaveDescription()
+                  : handleEditSection("description")
+              }
+              aria-label={
+                editingSection === "description"
+                  ? "Guardar descripción"
+                  : "Editar descripción"
+              }
             >
-              <FiEdit2 />
+              {editingSection === "description" ? <FiSave /> : <FiEdit2 />}
             </button>
           </div>
 
@@ -303,7 +365,6 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                   setEditingValue(task.description || "");
                 }
               }}
-              onBlur={handleSaveDescription}
               rows={4}
             />
           ) : (
@@ -321,7 +382,6 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
             <span className={classes.counter}>
               {completedCount}/{subtasks.length || 0}
             </span>
-            
           </div>
 
           {error ? <div className={classes.error}>{error}</div> : null}
@@ -335,13 +395,35 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                 const isBusy = busyId === st.id;
 
                 return (
-                  
                   <li key={st.id} className={classes.subtaskRow}>
                     <div className={classes.subtaskTop}>
                       <div className={classes.subtaskLeft}>
-                        <div className={done ? classes.done : classes.pending}>
-                          {st.name}
-                        </div>
+                        {editingSubtaskId === st.id ? (
+                          <input
+                            className={classes.subtaskInput}
+                            value={editingSubtaskValue}
+                            onChange={(e) =>
+                              setEditingSubtaskValue(e.target.value)
+                            }
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleSaveSubtask(st);
+                              }
+                              if (e.key === "Escape") {
+                                setEditingSubtaskId(null);
+                                setEditingSubtaskValue("");
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div
+                            className={done ? classes.done : classes.pending}
+                          >
+                            {st.name}
+                          </div>
+                        )}
 
                         <div className={classes.subtaskMeta}>
                           <span className={classes.subtaskMetaItem}>
@@ -354,17 +436,32 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                         </div>
 
                         {st.description ? (
-                          <div className={classes.subtaskDesc}>{st.description}</div>
+                          <div className={classes.subtaskDesc}>
+                            {st.description}
+                          </div>
                         ) : null}
                       </div>
 
                       <div className={classes.subtaskActions}>
                         <button
                           className={classes.editBtn}
-                          onClick={() => handleEditSection("subtask", st)}
-                          aria-label="Editar subtarea"
+                          onClick={() =>
+                            editingSubtaskId === st.id
+                              ? handleSaveSubtask(st)
+                              : handleStartEditSubtask(st)
+                          }
+                          disabled={savingSubtaskId === st.id}
+                          aria-label={
+                            editingSubtaskId === st.id
+                              ? "Guardar subtarea"
+                              : "Editar subtarea"
+                          }
                         >
-                          <FiEdit2 />
+                          {editingSubtaskId === st.id ? (
+                            <FiSave />
+                          ) : (
+                            <FiEdit2 />
+                          )}
                         </button>
 
                         <button
@@ -384,7 +481,9 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                       } ${classes.statusBadgeWide}`}
                       onClick={() => toggleSubtask(st)}
                       disabled={isBusy}
-                      aria-label={done ? "Cambiar a pendiente" : "Cambiar a completado"}
+                      aria-label={
+                        done ? "Cambiar a pendiente" : "Cambiar a completado"
+                      }
                     >
                       {isBusy ? "Guardando..." : getSubtaskStatusLabel(st)}
                     </button>
@@ -392,71 +491,85 @@ export default function TaskDetailsModal({ isOpen, onClose, task, onEdit }) {
                 );
               })}
             </ul>
-            
           )}
-        <div className={classes.addSubtaskBlock}>
-          {isAddingSubtask ? (
-            <div className={classes.newSubtaskForm}>
-
-              <input
-                className={classes.subtaskInput}
-                value={newSubtaskName}
-                placeholder="Nombre de la subtarea"
-                autoFocus
-                onChange={(e) => setNewSubtaskName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddSubtask();
-                  }
-
-                  if (e.key === "Escape") {
-                    setIsAddingSubtask(false);
-                  }
-                }}
-              />
-
-              <div className={classes.subtaskMetaRow}>
-
+          <div className={classes.addSubtaskBlock}>
+            {isAddingSubtask ? (
+              <div className={classes.newSubtaskForm}>
                 <input
-                  type="date"
-                  className={classes.subtaskDate}
-                  value={newSubtaskDate}
-                  onChange={(e) => setNewSubtaskDate(e.target.value)}
+                  className={classes.subtaskInput}
+                  value={newSubtaskName}
+                  placeholder="Nombre de la subtarea"
+                  autoFocus
+                  onChange={(e) => setNewSubtaskName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddSubtask();
+                    }
+
+                    if (e.key === "Escape") {
+                      handleCancelAddSubtask();
+                    }
+                  }}
                 />
 
-                <input
-                  type="number"
-                  className={classes.subtaskHours}
-                  placeholder="Horas"
-                  value={newSubtaskHours}
-                  onChange={(e) => setNewSubtaskHours(e.target.value)}
-                />
+                <div className={classes.subtaskMetaRow}>
+                  <input
+                    type="date"
+                    className={classes.subtaskDate}
+                    value={newSubtaskDate}
+                    onChange={(e) => setNewSubtaskDate(e.target.value)}
+                  />
 
+                  <input
+                    type="number"
+                    className={classes.subtaskHours}
+                    placeholder="Horas"
+                    value={newSubtaskHours}
+                    onChange={(e) => setNewSubtaskHours(e.target.value)}
+                  />
+                </div>
+
+                <div className={classes.newSubtaskActions}>
+                  <button
+                    type="button"
+                    className={classes.cancelSubtaskBtn}
+                    onClick={handleCancelAddSubtask}
+                    disabled={creatingSubtask}
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="button"
+                    className={classes.saveSubtaskBtn}
+                    onClick={handleAddSubtask}
+                    disabled={creatingSubtask || !newSubtaskName.trim()}
+                  >
+                    {creatingSubtask ? "Guardando..." : "Agregar subtarea"}
+                  </button>
+                </div>
               </div>
-
-            </div>
-          ) : (
-            <button
-              className={classes.addSubtaskBtn}
-              onClick={() => setIsAddingSubtask(true)}
-            >
-              + Añadir subtarea
-            </button>
-          )}
-        </div>
-
+            ) : (
+              <button
+                className={classes.addSubtaskBtn}
+                onClick={() => setIsAddingSubtask(true)}
+              >
+                + Añadir subtarea
+              </button>
+            )}
+          </div>
         </div>
 
         <div className={classes.footer}>
-          <button className={classes.btnGhost} onClick={onClose}>
+          <button className={classes.btnGhost} onClick={handleRequestClose}>
             Cerrar
           </button>
 
           <button
             className={classes.btnPrimary}
             onClick={() => {
-              onClose?.();
+              handleRequestClose();
               onEdit?.(task.id);
             }}
           >
