@@ -185,7 +185,7 @@ function TodayPage() {
             <h1>¡Hola, {username}! 👋🏼</h1>
             <p>
               {activeTasksCount > 0
-                ? `Tienes ${activeTasksCount} tareas prioritarias en tu radar hoy.`
+                ? `Tienes ${activeTasksCount} tareas prioritarias (hoy + vencidas) en tu radar hoy.`
                 : "No tienes tareas urgentes para hoy. ¡Disfruta tu día!"}
             </p>
           </div>
