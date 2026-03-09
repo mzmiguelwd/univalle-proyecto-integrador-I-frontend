@@ -7,9 +7,9 @@ import {
   MdVerified,
 } from "react-icons/md";
 
+import classes from "./Profile.module.css";
 import api from "../api/client";
 import { logoutUser } from "../api/auth";
-import classes from "./Profile.module.css";
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ function ProfilePage() {
     event.preventDefault();
 
     const nextValue = Number(dailyLimit);
-    if (!nextValue || nextValue < 1) {
+    if (!nextValue || nextValue < 1 || nextValue > 23) {
       setIsLimitInvalid(true);
       return;
     }
@@ -174,11 +174,14 @@ function ProfilePage() {
             </div>
 
             <form onSubmit={handleSaveLimit} className={classes.form}>
-              <label htmlFor="dailyLimit">Limite diario de actividades</label>
+              <label htmlFor="dailyLimit">
+                Limite de horas diarias para tareas (1-23)
+              </label>
               <input
                 id="dailyLimit"
                 type="number"
                 min="1"
+                max="23"
                 value={dailyLimit}
                 onChange={(event) => {
                   setDailyLimit(event.target.value);
@@ -196,7 +199,7 @@ function ProfilePage() {
               </button>
 
               <p className={classes.helperText}>
-                Recomendado entre 2 y 5 para mantener una carga equilibrada.
+                Recomendado entre 4 y 6 para mantener una carga equilibrada.
               </p>
             </form>
           </article>

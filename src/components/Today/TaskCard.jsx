@@ -11,7 +11,7 @@ function TaskCard({
   title,
   subject,
   priority,
-  progress,
+  subtasksStats,
   nextDelivery,
   finalDelivery,
   isCompleted,
@@ -29,6 +29,10 @@ function TaskCard({
     ${isOverdue ? classes.overdue : ""} 
     ${compact ? classes.compact : ""}
   `.trim();
+
+  const percentage = subtasksStats?.percentage || 0;
+  const completedStats = subtasksStats?.completed || 0;
+  const totalStats = subtasksStats?.total || 0;
 
   return (
     <article className={cardClasses}>
@@ -52,19 +56,19 @@ function TaskCard({
       {!compact && (
         <footer className={classes.footer}>
           <div className={classes.dateSection}>
-            <div className={classes.info}>
+            <div className={`${classes.info} ${classes.primaryDate}`}>
               <span className={classes.infoIcon}>
                 <MdAccessTime
                   className={classes.calendarIcon}
-                  style={{ color: "#d97706" }}
+                  style={{ color: "inherit" }}
                 />
               </span>
-              <span style={{ fontSize: "0.8rem" }}>
-                <strong>Próxima entrega:</strong> {nextDelivery}
+              <span>
+                <strong>Próxima Entrega:</strong> {nextDelivery}
               </span>
             </div>
 
-            <div className={classes.info}>
+            <div className={`${classes.info} ${classes.secondaryDate}`}>
               <span className={classes.infoIcon}>
                 {isCompleted ? (
                   <MdCheckCircle className={classes.checkIcon} />
@@ -72,24 +76,29 @@ function TaskCard({
                   <MdCalendarToday className={classes.calendarIcon} />
                 )}
               </span>
-              <span style={{ fontSize: "0.8rem" }}>
-                <strong>Entrega final:</strong> {finalDelivery}
-              </span>
+              <span>Entrega Final: {finalDelivery}</span>
             </div>
           </div>
 
           <div className={classes.progressSection}>
             <div className={classes.progressHeader}>
-              <span className={classes.progressLabel}>Progreso</span>
+              <span className={classes.progressLabel}>
+                Progreso{" "}
+                {totalStats > 0 && (
+                  <span className={classes.subtasksCount}>
+                    ({completedStats}/{totalStats})
+                  </span>
+                )}
+              </span>
               <span className={classes.progressValue}>
-                {isCompleted ? "100%" : `${progress}%`}
+                {isCompleted ? "100%" : `${percentage}%`}
               </span>
             </div>
             <div className={classes.progressBar}>
               <div
                 className={classes.progressFill}
                 style={{
-                  width: isCompleted ? "100%" : `${progress}%`,
+                  width: isCompleted ? "100%" : `${percentage}%`,
                 }}
               ></div>
             </div>

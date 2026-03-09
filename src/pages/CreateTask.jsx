@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { MdFormatListBulleted } from "react-icons/md";
 import toast from "react-hot-toast";
 
@@ -8,6 +7,27 @@ import classes from "./CreateTask.module.css";
 import { createTask, fetchDashboardTasks } from "../api/tasks";
 import CreateSubtask from "../components/CreateSubtask";
 
+const parseApiError = (err, defaultMsg) => {
+  if (err?.response?.data) {
+    const data = err.response.data;
+    if (typeof data === "string") return data;
+    if (typeof data === "object") {
+      const messages = [];
+      const extractMessages = (obj) => {
+        if (typeof obj === "string") {
+          messages.push(obj);
+        } else if (Array.isArray(obj)) {
+          obj.forEach(extractMessages);
+        } else if (typeof obj === "object" && obj !== null) {
+          Object.values(obj).forEach(extractMessages);
+        }
+      };
+      extractMessages(data);
+      if (messages.length > 0) return messages.join(" | ");
+    }
+  }
+  return err?.message || defaultMsg;
+};
 
 const CreateTask = () => {
   const navigate = useNavigate();
@@ -26,7 +46,7 @@ const CreateTask = () => {
   });
 
   const [subtasks, setSubtasks] = useState([]);
-  
+
   useEffect(() => {
     const loadCourses = async () => {
       try {
@@ -86,7 +106,7 @@ const CreateTask = () => {
 
     const dataToSubmit = {
       ...formData,
-      subtasks: subtasks,
+      subtasks: subtasks.map(({ id, ...rest }) => rest),
     };
     if (!dataToSubmit.due_date) {
       dataToSubmit.due_date = null;
@@ -97,22 +117,13 @@ const CreateTask = () => {
       toast.success("Tarea creada");
       navigate("/hoy");
     } catch (error) {
-      let errorMessage =
-        "Ocurrió un error al crear la tarea. Revisa los datos.";
-
-      if (error.response && error.response.data) {
-        const data = error.response.data;
-        const errorKeys = Object.keys(data);
-        if (errorKeys.length > 0) {
-          const firstError = data[errorKeys[0]];
-          if (Array.isArray(firstError)) {
-            errorMessage = `${errorKeys[0]}: ${firstError[0]}`;
-          } else if (typeof firstError === "string") {
-            errorMessage = firstError;
-          }
-        }
-      }
-      setError(errorMessage);
+      console.error(error);
+      setError(
+        parseApiError(
+          error,
+          "Ocurrió un error al crear la tarea. Revisa los datos.",
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -123,7 +134,9 @@ const CreateTask = () => {
       <div className={classes.card}>
         <form className={classes.form} onSubmit={handleSubmit}>
           <h2 className={classes.title}>Nueva Actividad</h2>
-          <p className={classes.requiredNote}>Los campos con * son obligatorios.</p>
+          <p className={classes.requiredNote}>
+            Los campos con * son obligatorios.
+          </p>
 
           {error && <div className={classes.errorBox}>{error}</div>}
 
@@ -230,13 +243,18 @@ const CreateTask = () => {
             </div>
 
             <div className={classes.addBox}>
-              <CreateSubtask onSubtaskCreated={onSubtaskCreated} />
+              <CreateSubtask
+                onSubtaskCreated={onSubtaskCreated}
+                taskDueDate={formData.due_date}
+              />
             </div>
 
             {subtasks.length === 0 ? (
               <div className={classes.emptyState}>
                 <MdFormatListBulleted className={classes.emptyIcon} />
-                <p>Divide y vencerás. Añade la primera subtarea para empezar.</p>
+                <p>
+                  Divide y vencerás. Añade la primera subtarea para empezar.
+                </p>
               </div>
             ) : (
               <ul className={classes.subtaskList}>
