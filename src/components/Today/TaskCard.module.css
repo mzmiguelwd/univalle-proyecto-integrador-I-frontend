@@ -153,16 +153,30 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.primaryDate {
   font-size: 0.8rem;
-  color: #64748b;
+  color: #d97706;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+.primaryDate span:first-child {
+  font-size: 1.15rem;
+}
+
+.secondaryDate {
+  font-size: 0.7rem;
+  color: #2e3135;
   font-weight: 500;
 }
 
-.info span:first-child {
-  font-size: 1.1rem;
+.secondaryDate span:first-child {
+  font-size: 1rem;
 }
 
-.overdue .info {
+.overdue .primaryDate {
   color: #dc2626;
   font-weight: 600;
 }
@@ -182,6 +196,15 @@
 
 .progressLabel {
   color: #64748b;
+  display: flex;
+  gap: 0.25rem;
+  align-items: center;
+}
+
+.subtasksCount {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .progressValue {
