@@ -89,3 +89,8 @@ export async function fetchWorkload(dateStr) {
   const { data } = await api.get(`/api/subtasks/workload/?date=${dateStr}`);
   return data;
 }
+
+export async function fetchProgressData() {
+  const { data } = await api.get("/api/progress/")
+  return data
+}
