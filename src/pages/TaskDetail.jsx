@@ -18,7 +18,6 @@ import {
   deleteTask,
   fetchDashboardTasks,
 } from "../api/tasks";
-import { formatHours } from "../utils/taskUtils";
 import CreateSubtask from "../components/CreateSubtask";
 
 function sortSubtasksByDate(subtasks) {
@@ -375,7 +374,6 @@ function TaskDetailPage() {
             <CreateSubtask
               taskId={task.id}
               onSubtaskCreated={onSubtaskCreated}
-              taskDueDate={task?.due_date}
             />
           </div>
           {subtasks.length === 0 ? (
@@ -396,7 +394,7 @@ function TaskDetailPage() {
                   </div>
                   <div className={classes.subtaskRight}>
                     <span className={classes.hoursBadge}>
-                      {formatHours(subtask.estimated_hours)}
+                      {subtask.estimated_hours} h
                     </span>
                   </div>
                 </li>

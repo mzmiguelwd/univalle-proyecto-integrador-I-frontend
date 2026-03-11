@@ -1,0 +1,105 @@
+.row {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 14px;
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+}
+
+.topLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  font-size: 12px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.desc {
+  margin-top: 6px;
+  font-size: 13px;
+  opacity: 0.85;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+}
+
+.actions {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.kebabBtn {
+  width: 36px;
+  height: 36px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.06);
+
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.menu {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  z-index: 50;
+
+  min-width: 190px;
+  padding: 8px;
+  border-radius: 12px;
+
+  background: rgba(20, 20, 20, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(8px);
+}
+
+.menu button {
+  width: 100%;
+  text-align: left;
+
+  padding: 10px 10px;
+  border: none;
+  background: transparent;
+
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.menu button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.danger {
+  color: #ff6b6b;
+}
