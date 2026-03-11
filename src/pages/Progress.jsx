@@ -8,7 +8,7 @@ import {
   CartesianGrid
 } from "recharts"
 
-import classes from "./ProgressPage.module.css"
+import classes from "./Progress.module.css"
 
 const monthlyData = [
   { month: "Ene", tasks: 12 },
