@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react"
+import { fetchProgressData } from "../api/tasks"
 import {
   BarChart,
   Bar,
@@ -10,30 +12,37 @@ import {
 
 import classes from "./Progress.module.css"
 
-const monthlyData = [
-  { month: "Ene", tasks: 12 },
-  { month: "Feb", tasks: 18 },
-  { month: "Mar", tasks: 9 },
-  { month: "Abr", tasks: 15 }
-]
-
-const weeklyData = [
-  { day: "Lun", tasks: 3 },
-  { day: "Mar", tasks: 2 },
-  { day: "Mié", tasks: 4 },
-  { day: "Jue", tasks: 1 },
-  { day: "Vie", tasks: 3 }
-]
-
-const hoursData = [
-  { day: "Lun", hours: 2 },
-  { day: "Mar", hours: 4 },
-  { day: "Mié", hours: 3 },
-  { day: "Jue", hours: 2 },
-  { day: "Vie", hours: 5 }
-]
-
 export default function ProgressPage() {
+
+  const [monthlyData, setMonthlyData] = useState([])
+  const [weeklyData, setWeeklyData] = useState([])
+  const [hoursData, setHoursData] = useState([])
+
+  const [kpis, setKpis] = useState({
+    tasks_month: 0,
+    tasks_week: 0,
+    hours: 0,
+    completion: 0
+  })
+
+  useEffect(() => {
+    const loadProgress = async () => {
+      try {
+        const data = await fetchProgressData()
+
+        setMonthlyData(data.monthly_tasks)
+        setWeeklyData(data.weekly_tasks)
+        setHoursData(data.hours_worked)
+        setKpis(data.kpis)
+
+      } catch (error) {
+        console.error("Error cargando progreso", error)
+      }
+    }
+
+  loadProgress()
+}, [])
+
   return (
     <div className={classes.page}>
 
@@ -46,23 +55,23 @@ export default function ProgressPage() {
       <div className={classes.kpiGrid}>
 
         <div className={classes.kpiCard}>
-          <span>Tareas este mes</span>
-          <strong>18</strong>
+          <span>Total actividades</span>
+          <strong>{kpis.tasks_month}</strong>
         </div>
 
         <div className={classes.kpiCard}>
-          <span>Tareas esta semana</span>
-          <strong>6</strong>
+          <span>Subtareas esta semana</span>
+          <strong>{kpis.tasks_week}</strong>
         </div>
 
         <div className={classes.kpiCard}>
           <span>Horas trabajadas</span>
-          <strong>24h</strong>
+          <strong>{kpis.hours}h</strong>
         </div>
 
         <div className={classes.kpiCard}>
           <span>Cumplimiento</span>
-          <strong>72%</strong>
+          <strong>{kpis.completion}%</strong>
         </div>
 
       </div>
@@ -84,12 +93,12 @@ export default function ProgressPage() {
         </div>
 
         <div className={classes.chartCard}>
-          <h3>Tareas por semana</h3>
+          <h3>Subtareas por día</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={weeklyData}>
               <CartesianGrid strokeDasharray="3 3"/>
               <XAxis dataKey="day"/>
-              <YAxis/>
+              <YAxis allowDecimals={false}/>
               <Tooltip/>
               <Bar dataKey="tasks"/>
             </BarChart>
@@ -97,7 +106,7 @@ export default function ProgressPage() {
         </div>
 
         <div className={classes.chartCard}>
-          <h3>Horas trabajadas</h3>
+          <h3>Horas de trabajo por día</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={hoursData}>
               <CartesianGrid strokeDasharray="3 3"/>
