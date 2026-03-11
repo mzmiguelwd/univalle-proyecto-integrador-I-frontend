@@ -1,4 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { MdWarningAmber } from "react-icons/md";
+import { fetchWorkload } from "../../api/tasks";
+import { Link } from "react-router-dom";
 import {
   MdCheckBox,
   MdCheckBoxOutlineBlank,
@@ -53,6 +56,57 @@ export default function TaskModalSubtasks({
   taskDueDate,
 }) {
   const [editingSubtaskId, setEditingSubtaskId] = useState(null);
+  const [workloadInfo, setWorkloadInfo] = useState(null);
+  const [editingDate, setEditingDate] = useState(null);
+  const [editingHours, setEditingHours] = useState(null);
+  const [newWorkloadInfo, setNewWorkloadInfo] = useState(null);
+
+  useEffect(() => {
+  if (editingDate) {
+    const loadWorkload = async () => {
+      try {
+        const data = await fetchWorkload(editingDate);
+        setWorkloadInfo(data);
+      } catch (e) {
+        console.error("No se pudo obtener carga diaria", e);
+        setWorkloadInfo(null);
+      }
+    };
+
+    loadWorkload();
+  }
+}, [editingDate]);
+
+useEffect(() => {
+  if (newSubtaskDate) {
+    const loadWorkload = async () => {
+      try {
+        const data = await fetchWorkload(newSubtaskDate);
+        setNewWorkloadInfo(data);
+      } catch (e) {
+        console.error("No se pudo obtener carga diaria.", e);
+        setNewWorkloadInfo(null);
+      }
+    };
+
+    loadWorkload();
+  }
+}, [newSubtaskDate]);
+
+const parsedHours = Number(editingHours || 0);
+
+const isOverloaded =
+  workloadInfo &&
+  parsedHours > 0 &&
+  workloadInfo.total_hours + parsedHours > workloadInfo.daily_limit;
+
+const parsedNewHours = Number(newSubtaskHours || 0);
+
+const isNewOverloaded =
+  newWorkloadInfo &&
+  parsedNewHours > 0 &&
+  newWorkloadInfo.total_hours + parsedNewHours >
+    newWorkloadInfo.daily_limit;
 
   return (
     <div className={classes.section}>
@@ -100,25 +154,29 @@ export default function TaskModalSubtasks({
                       max={taskDueDate ? taskDueDate.split("T")[0] : undefined}
                       className={classes.inlineInput}
                       value={st.target_date || ""}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setEditingDate(value);
                         handleUpdateDraftSubtask(
                           st.id,
                           "target_date",
-                          e.target.value,
+                          value,
                         )
-                      }
+                      }}
                       title="Fecha estimada"
                     />
                     <select
                       className={`${classes.inlineInput} ${classes.hourSelect}`}
                       value={normalizeHourOption(st.estimated_hours)}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setEditingHours(value);
                         handleUpdateDraftSubtask(
                           st.id,
                           "estimated_hours",
-                          e.target.value,
+                          value,
                         )
-                      }
+                      }}
                       title="Horas"
                     >
                       <option value="" disabled>
@@ -147,6 +205,18 @@ export default function TaskModalSubtasks({
                       handleUpdateDraftSubtask(st.id, "note", e.target.value)
                     }
                   />
+                  {isOverloaded && (
+                    <div className={classes.warningBox}>
+                      <MdWarningAmber className={classes.warningIcon} />
+                      <div>
+                        <strong>¡Carga diaria excedida!</strong> Con esta subtarea sumarías{" "}
+                        {workloadInfo.total_hours + parsedHours}h programadas para este día,
+                        superando tu límite de{" "}
+                        <Link to="/perfil">{workloadInfo.daily_limit}h</Link>.
+                        Te recomendamos revisar <Link to="/hoy">tus tareas de hoy</Link> o elegir otro día.
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className={classes.actionGroup}>
                   <button
@@ -182,7 +252,11 @@ export default function TaskModalSubtasks({
               <div className={classes.subtaskInfo}>
                 <p
                   className={`${classes.subtaskName} ${isDone ? classes.doneText : ""} ${st.note ? classes.subtaskNameHasNote : ""}`}
-                  onClick={() => setEditingSubtaskId(st.id)}
+                  onClick={() => {
+                    setEditingSubtaskId(st.id);
+                    setEditingDate(st.target_date);
+                    setEditingHours(st.estimated_hours);
+                  }}
                 >
                   {st.name || st.title}
                 </p>
@@ -208,7 +282,11 @@ export default function TaskModalSubtasks({
               <div className={classes.subtaskActions}>
                 <button
                   className={classes.editIconBtn}
-                  onClick={() => setEditingSubtaskId(st.id)}
+                  onClick={() => {
+                    setEditingSubtaskId(st.id);
+                    setEditingDate(st.target_date);
+                    setEditingHours(st.estimated_hours);
+                  }}
                   title="Editar"
                 >
                   <MdEdit size={18} />
@@ -276,6 +354,18 @@ export default function TaskModalSubtasks({
                 </select>
               </div>
             </div>
+            {isNewOverloaded && (
+              <div className={classes.warningBox}>
+                <MdWarningAmber className={classes.warningIcon} />
+                <div>
+                  <strong>¡Carga diaria excedida!</strong> Con esta subtarea sumarías{" "}
+                  {newWorkloadInfo.total_hours + parsedNewHours}h programadas para este día,
+                  superando tu límite de{" "}
+                  <Link to="/perfil">{newWorkloadInfo.daily_limit}h</Link>.
+                  Te recomendamos revisar <Link to="/hoy">tus tareas de hoy</Link> o elegir otro día.
+                </div>
+              </div>
+            )}
             <div className={classes.actionGroup}>
               <button
                 className={classes.saveBtn}
