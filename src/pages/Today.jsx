@@ -1,14 +1,12 @@
-﻿import { useCallback, useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { MdLogout, MdFilterList } from "react-icons/md";
 
 import classes from "./Today.module.css";
-import { logoutUser } from "../api/auth";
 import { fetchDashboardTasks } from "../api/tasks";
-import { getPriority, parseLocalDate } from "../utils/taskUtils";
-import TaskDetailsModal from "../components/TaskModal/TaskModal";
-import TodayHeader from "../components/Today/TodayHeader";
-import TodayFilters from "../components/Today/TodayFilters";
-import TaskGridSection from "../components/Today/TaskGridSection";
+import { logoutUser } from "../api/auth";
+import TaskCard from "../components/TaskCard";
+import TaskDetailsModal from "../components/TaskDetailsModal";
 
 function TodayPage() {
   const navigate = useNavigate();
@@ -22,8 +20,6 @@ function TodayPage() {
   // Filter states
   const [courseFilter, setCourseFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
-  const [sectionFilter, setSectionFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
 
   // Categorized state (what is rendered on the page)
   const [tasks, setTasks] = useState({
@@ -83,6 +79,43 @@ function TodayPage() {
     })();
   }, [navigate, loadDashboardTasks]);
 
+  const getPriority = (taskType) => {
+    if (taskType === "examen" || taskType === "proyecto") return "Alta";
+    if (taskType === "quiz") return "Media";
+    return "Baja";
+  };
+
+  const calculateProgress = (subtasks) => {
+    if (!subtasks || subtasks.length === 0) return 0;
+    const completed = subtasks.filter(
+      (subtask) => subtask.status == "done",
+    ).length;
+    return Math.round((completed / subtasks.length) * 100);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Sin fecha";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const getNextDeliveryDate = (subtasks) => {
+    if (!subtasks || subtasks.length === 0) return "Sin planificar";
+    const pendingSubtasks = subtasks.filter(
+      (subtask) => subtask.status !== "done",
+    );
+    if (pendingSubtasks.length === 0) return "Todo completado";
+
+    pendingSubtasks.sort(
+      (a, b) => new Date(a.target_date) - new Date(b.target_date),
+    );
+    return formatDate(pendingSubtasks[0].target_date);
+  };
+
   useEffect(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -101,38 +134,20 @@ function TodayPage() {
         getPriority(task.task_type) === priorityFilter;
       const courseMatch =
         courseFilter === "all" || task.course === courseFilter;
-      const searchMatch =
-        searchQuery === "" ||
-        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        task.course.toLowerCase().includes(searchQuery.toLowerCase());
 
-      if (!priorityMatch || !courseMatch || !searchMatch) return;
+      if (!priorityMatch || !courseMatch) return;
 
       if (task.is_completed) {
         categorized.completed.push(task);
         return;
       }
 
-      let relevantDateStr = task.due_date;
-      if (task.subtasks && task.subtasks.length > 0) {
-        const pendingSubtasks = task.subtasks.filter(
-          (subtask) => subtask.status !== "done",
-        );
-        if (pendingSubtasks.length > 0) {
-          pendingSubtasks.sort(
-            (a, b) =>
-              parseLocalDate(a.target_date) - parseLocalDate(b.target_date),
-          );
-          relevantDateStr = pendingSubtasks[0].target_date;
-        }
-      }
-
-      if (!relevantDateStr) {
+      if (!task.due_date) {
         categorized.noDate.push(task);
         return;
       }
 
-      const taskDate = parseLocalDate(relevantDateStr);
+      const taskDate = new Date(task.due_date);
       taskDate.setHours(0, 0, 0, 0);
 
       if (taskDate < today) {
@@ -144,33 +159,8 @@ function TodayPage() {
       }
     });
 
-    const sortByDate = (a, b) => {
-      const getRelevantDateStr = (task) => {
-        let dateStr = task.due_date;
-        if (task.subtasks && task.subtasks.length > 0) {
-          const pendingSubtasks = task.subtasks.filter(
-            (subtask) => subtask.status !== "done",
-          );
-          if (pendingSubtasks.length > 0) {
-            pendingSubtasks.sort(
-              (s1, s2) =>
-                parseLocalDate(s1.target_date) - parseLocalDate(s2.target_date),
-            );
-            dateStr = pendingSubtasks[0].target_date;
-          }
-        }
-        return dateStr ? parseLocalDate(dateStr).getTime() : 0;
-      };
-
-      return getRelevantDateStr(a) - getRelevantDateStr(b);
-    };
-
-    categorized.overdue.sort(sortByDate);
-    categorized.today.sort(sortByDate);
-    categorized.upcoming.sort(sortByDate);
-
     setTasks(categorized);
-  }, [rawTasks, courseFilter, priorityFilter, searchQuery]);
+  }, [rawTasks, courseFilter, priorityFilter]);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -190,107 +180,210 @@ function TodayPage() {
   return (
     <div className={classes.pageWrapper}>
       <div className={classes.container}>
-        <TodayHeader
-          username={username}
-          activeTasksCount={activeTasksCount}
-          onLogout={handleLogout}
-        />
-
-        {!loading && rawTasks.length === 0 && (
-          <div className={classes.noActivitiesCard}>
-            <div className={classes.noActivitiesInfo}>
-              <span className={classes.noActivitiesIcon}>🚀</span>
-              <div>
-                <h3 className={classes.noActivitiesTitle}>
-                  Aún no tienes ninguna actividad
-                </h3>
-                <p className={classes.noActivitiesText}>
-                  Empieza a organizar tu semestre creando tu primera tarea.
-                </p>
-              </div>
-            </div>
-            <Link to="/crear" className={classes.createActivityBtn}>
-              Crear actividad
-            </Link>
+        <header className={classes.header}>
+          <div className={classes.headerText}>
+            <h1>¡Hola, {username}! 👋🏼</h1>
+            <p>
+              {activeTasksCount > 0
+                ? `Tienes ${activeTasksCount} tareas prioritarias (hoy + vencidas) en tu radar hoy.`
+                : "No tienes tareas urgentes para hoy. ¡Disfruta tu día!"}
+            </p>
           </div>
-        )}
 
-        <TodayFilters
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          courseFilter={courseFilter}
-          setCourseFilter={setCourseFilter}
-          availableCourses={availableCourses}
-          priorityFilter={priorityFilter}
-          setPriorityFilter={setPriorityFilter}
-          sectionFilter={sectionFilter}
-          setSectionFilter={setSectionFilter}
-        />
+          <button
+            onClick={handleLogout}
+            className={classes.logoutBtn}
+            aria-label="Cerrar sesión"
+          >
+            {<MdLogout className={classes.logoutIcon} />}
+            Cerrar sesión
+          </button>
+        </header>
+
+        <section className={classes.filtersSection}>
+          <div className={classes.filterGroup}>
+            <MdFilterList className={classes.filterIcon} />
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className={classes.filterSelect}
+            >
+              <option value="all">Todas las asignaturas</option>
+              {availableCourses.map((course) => (
+                <option key={course} value={course}>
+                  {course}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className={classes.filterSelect}
+            >
+              <option value="all">Todas las prioridades</option>
+              <option value="Alta">Prioridad Alta</option>
+              <option value="Media">Prioridad Media</option>
+              <option value="Baja">Prioridad Baja</option>
+            </select>
+          </div>
+        </section>
 
         <div className={classes.dashboardContent}>
-          <TaskGridSection
-            tasks={tasks.overdue}
-            sectionFilter={sectionFilter}
-            targetFilter="overdue"
-            title="Vencidas"
-            icon="🔴"
-            emptyMessage="¡Excelente! No tienes tareas vencidas."
-            emptyIcon="🎉"
-            openModal={openModal}
-            isOverdue={true}
-          />
-          <TaskGridSection
-            tasks={tasks.today}
-            sectionFilter={sectionFilter}
-            targetFilter="today"
-            title="Foco de Hoy"
-            icon="🟢"
-            emptyMessage="Todo al día. No hay entregas programadas para hoy."
-            emptyIcon="🧘"
-            openModal={openModal}
-          />
-          <TaskGridSection
-            tasks={tasks.upcoming}
-            sectionFilter={sectionFilter}
-            targetFilter="upcoming"
-            title="Próximamente"
-            icon="🔵"
-            emptyMessage="No tienes tareas programadas próximamente."
-            emptyIcon="🚀"
-            openModal={openModal}
-          />
-          <TaskGridSection
-            tasks={tasks.noDate}
-            sectionFilter={sectionFilter}
-            targetFilter="noDate"
-            title="Sin fecha límite"
-            icon="⚪"
-            emptyMessage="No hay tareas sin planificar."
-            emptyIcon="✅"
-            openModal={openModal}
-            compact={true}
-          />
-          <TaskGridSection
-            tasks={tasks.completed}
-            sectionFilter={sectionFilter}
-            targetFilter="completed"
-            title="Completadas"
-            icon="✅"
-            emptyMessage="Aún no has completado tareas."
-            emptyIcon="🤖"
-            openModal={openModal}
-            isCompleted={true}
-          />
+          {tasks.overdue.length > 0 && (
+            <section className={classes.taskSection}>
+              <div className={classes.sectionHeader}>
+                <span className={classes.urgentBadge}>🔴 Vencidas</span>
+                <span className={classes.taskCount}>
+                  {tasks.overdue.length}
+                </span>
+              </div>
+              <div className={classes.grid}>
+                {tasks.overdue.map((t) => (
+                  <div
+                    key={t.id}
+                    className={classes.Link}
+                    onClick={() => openModal(t)}
+                  >
+                    <TaskCard
+                      title={t.title}
+                      subject={t.course}
+                      priority={getPriority(t.task_type)}
+                      progress={calculateProgress(t.subtasks)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
+                      isOverdue={true}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className={classes.taskSection}>
+            <div className={classes.sectionHeader}>
+              <h2 className={classes.sectionTitle}>🟢 Foco de Hoy</h2>
+              <span className={classes.taskCount}>{tasks.today.length}</span>
+            </div>
+            {tasks.today.length === 0 ? (
+              <div className={classes.emptyState}>
+                <p>Todo al día. No hay entregas programadas para hoy.</p>
+              </div>
+            ) : (
+              <div className={classes.grid}>
+                {tasks.today.map((t) => (
+                  <div
+                    key={t.id}
+                    className={classes.cardLink}
+                    onClick={() => openModal(t)}
+                  >
+                    <TaskCard
+                      title={t.title}
+                      subject={t.course}
+                      priority={getPriority(t.task_type)}
+                      progress={calculateProgress(t.subtasks)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {tasks.upcoming.length > 0 && (
+            <section className={classes.taskSection}>
+              <div className={classes.sectionHeader}>
+                <h2 className={classes.sectionTitle}>🔵 Próximamente</h2>
+                <span className={classes.taskCount}>
+                  {tasks.upcoming.length}
+                </span>
+              </div>
+              <div className={classes.grid}>
+                {tasks.upcoming.map((t) => (
+                  <div
+                    key={t.id}
+                    className={classes.cardLink}
+                    onClick={() => openModal(t)}
+                  >
+                    <TaskCard
+                      title={t.title}
+                      subject={t.course}
+                      priority={getPriority(t.task_type)}
+                      progress={calculateProgress(t.subtasks)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {tasks.noDate.length > 0 && (
+            <section className={classes.taskSection}>
+              <div className={classes.sectionHeader}>
+                <h2 className={classes.sectionTitle}>⚪ Sin fecha límite</h2>
+                <span className={classes.taskCount}>{tasks.noDate.length}</span>
+              </div>
+              <div className={classes.grid}>
+                {tasks.noDate.map((t) => (
+                  <div
+                    key={t.id}
+                    className={classes.cardLink}
+                    onClick={() => openModal(t)}
+                  >
+                    <TaskCard
+                      title={t.title}
+                      subject={t.course}
+                      priority={getPriority(t.task_type)}
+                      nextDelivery={getNextDeliveryDate(t.subtasks)}
+                      finalDelivery={formatDate(t.due_date)}
+                      compact={true}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {tasks.completed.length > 0 && (
+            <section className={classes.taskSection}>
+              <div className={classes.sectionHeader}>
+                <h2 className={classes.sectionTitle}>✅ Completadas</h2>
+                <span className={classes.taskCount}>
+                  {tasks.completed.length}
+                </span>
+              </div>
+              <div className={classes.grid}>
+                {tasks.completed.map((t) => (
+                  <div
+                    key={t.id}
+                    className={classes.cardLink}
+                    onClick={() => openModal(t)}
+                  >
+                    <TaskCard
+                      title={t.title}
+                      subject={t.course}
+                      priority={getPriority(t.task_type)}
+                      progress={100}
+                      nextDelivery={"---"}
+                      finalDelivery={formatDate(t.due_date)}
+                      isCompleted={true}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
       </div>
-
-      {isModalOpen && selectedTask && (
-        <TaskDetailsModal
-          onClose={closeModal}
-          task={selectedTask}
-          onTaskUpdated={loadDashboardTasks}
-        />
-      )}
+      <TaskDetailsModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        task={selectedTask}
+        onEdit={(taskId) => navigate(`/actividad/${taskId}`)}
+      />
     </div>
   );
 }
