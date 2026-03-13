@@ -9,10 +9,13 @@ import TaskDetailsModal from "../components/TaskModal/TaskModal";
 import TodayHeader from "../components/Today/TodayHeader";
 import TodayFilters from "../components/Today/TodayFilters";
 import TaskGridSection from "../components/Today/TaskGridSection";
+import TodayOverloadWarnings from "../components/Today/TodayOverloadWarnings";
 
 function TodayPage() {
   const navigate = useNavigate();
   const username = localStorage.getItem("username") || "Usuario";
+
+  const dailyLimit = Number(localStorage.getItem("daily_limit")) || 6;
 
   // Data states
   const [rawTasks, setRawTasks] = useState([]);
@@ -194,6 +197,12 @@ function TodayPage() {
           username={username}
           activeTasksCount={activeTasksCount}
           onLogout={handleLogout}
+        />
+
+        <TodayOverloadWarnings
+          rawTasks={rawTasks}
+          dailyLimit={dailyLimit}
+          onTasksUpdated={loadDashboardTasks}
         />
 
         {!loading && rawTasks.length === 0 && (

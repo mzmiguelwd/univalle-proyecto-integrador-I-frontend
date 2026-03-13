@@ -62,51 +62,46 @@ export default function TaskModalSubtasks({
   const [newWorkloadInfo, setNewWorkloadInfo] = useState(null);
 
   useEffect(() => {
-  if (editingDate) {
-    const loadWorkload = async () => {
-      try {
-        const data = await fetchWorkload(editingDate);
-        setWorkloadInfo(data);
-      } catch (e) {
-        console.error("No se pudo obtener carga diaria", e);
-        setWorkloadInfo(null);
-      }
-    };
+    if (editingDate) {
+      const loadWorkload = async () => {
+        try {
+          const data = await fetchWorkload(editingDate);
+          setWorkloadInfo(data);
+        } catch (e) {
+          console.error("No se pudo obtener carga diaria", e);
+          setWorkloadInfo(null);
+        }
+      };
 
-    loadWorkload();
-  }
-}, [editingDate]);
+      loadWorkload();
+    }
+  }, [editingDate]);
 
-useEffect(() => {
-  if (newSubtaskDate) {
-    const loadWorkload = async () => {
-      try {
-        const data = await fetchWorkload(newSubtaskDate);
-        setNewWorkloadInfo(data);
-      } catch (e) {
-        console.error("No se pudo obtener carga diaria.", e);
-        setNewWorkloadInfo(null);
-      }
-    };
+  useEffect(() => {
+    if (newSubtaskDate) {
+      const loadWorkload = async () => {
+        try {
+          const data = await fetchWorkload(newSubtaskDate);
+          setNewWorkloadInfo(data);
+        } catch (e) {
+          console.error("No se pudo obtener carga diaria.", e);
+          setNewWorkloadInfo(null);
+        }
+      };
 
-    loadWorkload();
-  }
-}, [newSubtaskDate]);
+      loadWorkload();
+    }
+  }, [newSubtaskDate]);
 
-const parsedHours = Number(editingHours || 0);
+  const parsedHours = Number(editingHours || 0);
 
-const isOverloaded =
-  workloadInfo &&
-  parsedHours > 0 &&
-  workloadInfo.total_hours + parsedHours > workloadInfo.daily_limit;
+  const parsedNewHours = Number(newSubtaskHours || 0);
 
-const parsedNewHours = Number(newSubtaskHours || 0);
-
-const isNewOverloaded =
-  newWorkloadInfo &&
-  parsedNewHours > 0 &&
-  newWorkloadInfo.total_hours + parsedNewHours >
-    newWorkloadInfo.daily_limit;
+  const isNewOverloaded =
+    newWorkloadInfo &&
+    parsedNewHours > 0 &&
+    newWorkloadInfo.total_hours + parsedNewHours >
+      newWorkloadInfo.daily_limit;
 
   return (
     <div className={classes.section}>
@@ -115,6 +110,7 @@ const isNewOverloaded =
           <MdCheckBox size={20} />
           Plan de Trabajo (Subtareas)
         </h3>
+
         {isEditingSubtasks && (
           <button
             className={`${classes.saveBtn} ${classes.savePlanBtn}`}
@@ -125,6 +121,7 @@ const isNewOverloaded =
           </button>
         )}
       </div>
+
       {error && <p className={classes.errorText}>{error}</p>}
 
       <div className={classes.subtaskList}>
@@ -148,6 +145,7 @@ const isNewOverloaded =
                     }
                     autoFocus
                   />
+
                   <div className={classes.editSubtaskRow}>
                     <input
                       type="date"
@@ -161,10 +159,11 @@ const isNewOverloaded =
                           st.id,
                           "target_date",
                           value,
-                        )
+                        );
                       }}
                       title="Fecha estimada"
                     />
+
                     <select
                       className={`${classes.inlineInput} ${classes.hourSelect}`}
                       value={normalizeHourOption(st.estimated_hours)}
@@ -175,18 +174,20 @@ const isNewOverloaded =
                           st.id,
                           "estimated_hours",
                           value,
-                        )
+                        );
                       }}
                       title="Horas"
                     >
                       <option value="" disabled>
                         Horas
                       </option>
+
                       {hourOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
                         </option>
                       ))}
+
                       {st.estimated_hours &&
                         !hourOptions.some(
                           (o) => Number(o.value) === Number(st.estimated_hours),
@@ -197,6 +198,7 @@ const isNewOverloaded =
                         )}
                     </select>
                   </div>
+
                   <textarea
                     placeholder="Descripción (opcional)"
                     className={`${classes.inlineInput} ${classes.noteTextarea}`}
@@ -205,19 +207,8 @@ const isNewOverloaded =
                       handleUpdateDraftSubtask(st.id, "note", e.target.value)
                     }
                   />
-                  {isOverloaded && (
-                    <div className={classes.warningBox}>
-                      <MdWarningAmber className={classes.warningIcon} />
-                      <div>
-                        <strong>¡Carga diaria excedida!</strong> Con esta subtarea sumarías{" "}
-                        {workloadInfo.total_hours + parsedHours}h programadas para este día,
-                        superando tu límite de{" "}
-                        <Link to="/perfil">{workloadInfo.daily_limit}h</Link>.
-                        Te recomendamos revisar <Link to="/hoy">tus tareas de hoy</Link> o elegir otro día.
-                      </div>
-                    </div>
-                  )}
                 </div>
+
                 <div className={classes.actionGroup}>
                   <button
                     className={classes.saveBtn}
@@ -237,9 +228,6 @@ const isNewOverloaded =
                   className={`${classes.checkboxBtn} ${isDone ? classes.done : ""}`}
                   onClick={() => toggleSubtask(st)}
                   disabled={busyId === st.id}
-                  title={
-                    isDone ? "Marcar como pendiente" : "Marcar como completada"
-                  }
                 >
                   {isDone ? (
                     <MdCheckBox size={20} color="white" />
@@ -251,7 +239,7 @@ const isNewOverloaded =
 
               <div className={classes.subtaskInfo}>
                 <p
-                  className={`${classes.subtaskName} ${isDone ? classes.doneText : ""} ${st.note ? classes.subtaskNameHasNote : ""}`}
+                  className={`${classes.subtaskName} ${isDone ? classes.doneText : ""}`}
                   onClick={() => {
                     setEditingSubtaskId(st.id);
                     setEditingDate(st.target_date);
@@ -260,17 +248,20 @@ const isNewOverloaded =
                 >
                   {st.name || st.title}
                 </p>
+
                 {st.note && (
                   <p className={classes.subtaskNote}>
                     {st.note}
                   </p>
                 )}
+
                 <div className={classes.subtaskMeta}>
                   {st.target_date && (
                     <span className={classes.metaBadge}>
                       <MdCalendarToday /> {formatDate(st.target_date)}
                     </span>
                   )}
+
                   {st.estimated_hours > 0 && (
                     <span className={classes.metaBadge}>
                       <MdAccessTime /> {formatHours(st.estimated_hours)}
@@ -287,14 +278,13 @@ const isNewOverloaded =
                     setEditingDate(st.target_date);
                     setEditingHours(st.estimated_hours);
                   }}
-                  title="Editar"
                 >
                   <MdEdit size={18} />
                 </button>
+
                 <button
                   className={classes.deleteIconBtn}
                   onClick={() => handleDeleteSubtask(st)}
-                  title="Eliminar"
                 >
                   <MdDeleteOutline size={18} />
                 </button>
@@ -319,16 +309,14 @@ const isNewOverloaded =
               placeholder="Nombre de la nueva subtarea"
               value={newSubtaskName}
               onChange={(e) => setNewSubtaskName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddSubtask();
-                if (e.key === "Escape") handleCancelAddSubtask();
-              }}
             />
+
             <div className={classes.editSubtaskRow}>
               <div className={classes.formField}>
                 <span className={classes.fieldLabel}>
                   Fecha
                 </span>
+
                 <input
                   type="date"
                   max={taskDueDate ? taskDueDate.split("T")[0] : undefined}
@@ -337,10 +325,12 @@ const isNewOverloaded =
                   onChange={(e) => setNewSubtaskDate(e.target.value)}
                 />
               </div>
+
               <div className={classes.formField}>
                 <span className={classes.fieldLabel}>
                   Horas
                 </span>
+
                 <select
                   className={`${classes.inlineInput} ${classes.hourSelect}`}
                   value={newSubtaskHours}
@@ -354,6 +344,7 @@ const isNewOverloaded =
                 </select>
               </div>
             </div>
+
             {isNewOverloaded && (
               <div className={classes.warningBox}>
                 <MdWarningAmber className={classes.warningIcon} />
@@ -366,6 +357,7 @@ const isNewOverloaded =
                 </div>
               </div>
             )}
+
             <div className={classes.actionGroup}>
               <button
                 className={classes.saveBtn}
@@ -379,6 +371,7 @@ const isNewOverloaded =
               >
                 {creatingSubtask ? "Guardando..." : "Añadir al plan"}
               </button>
+
               <button
                 className={classes.cancelBtn}
                 onClick={handleCancelAddSubtask}
