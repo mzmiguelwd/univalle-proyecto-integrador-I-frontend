@@ -3,6 +3,7 @@ import { MdClose, MdDelete } from "react-icons/md";
 import toast from "react-hot-toast";
 
 import classes from "./TaskModal.module.css";
+import ConfirmModal from "../ConfirmModal";
 import {
   fetchTaskById,
   partiallyUpdateTask,
@@ -69,6 +70,21 @@ export default function TaskDetailsModal({ task, onClose, onTaskUpdated }) {
 
   const [isEditingSubtasks, setIsEditingSubtasks] = useState(false);
   const [savingSubtasks, setSavingSubtasks] = useState(false);
+
+  // Estados del modal de confirmación
+  const [confirmModal, setConfirmModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmText: "Confirmar",
+    isDanger: false,
+    onConfirm: null,
+  });
+
+  const openConfirm = (config) => setConfirmModal({ open: true, ...config });
+
+  const closeConfirm = () =>
+    setConfirmModal((prev) => ({ ...prev, open: false, onConfirm: null }));
 
   // States for adding a new subtask
   const [isAddingSubtask, setIsAddingSubtask] = useState(false);
@@ -266,47 +282,57 @@ export default function TaskDetailsModal({ task, onClose, onTaskUpdated }) {
     }
   };
 
-  const handleDeleteSubtask = async (st) => {
-    if (!window.confirm("¿Seguro que deseas eliminar esta subtarea?")) return;
-
-    const toastId = toast.loading("Eliminando subtarea...");
-    try {
-      setBusyId(st.id);
-      setError(null);
-      await deleteSubtask(st.id);
-
-      toast.success("Subtarea eliminada", { id: toastId });
-      await fetchDetails();
-      if (onTaskUpdated) onTaskUpdated();
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al eliminar subtarea", { id: toastId });
-      setError(parseApiError(err, "Error al eliminar la subtarea."));
-    } finally {
-      setBusyId(null);
-    }
+  const handleDeleteSubtask = (st) => {
+    openConfirm({
+      title: "Eliminar subtarea",
+      message:
+        "¿Seguro que deseas eliminar esta subtarea? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      isDanger: true,
+      onConfirm: async () => {
+        closeConfirm();
+        const toastId = toast.loading("Eliminando subtarea...");
+        try {
+          setBusyId(st.id);
+          setError(null);
+          await deleteSubtask(st.id);
+          toast.success("Subtarea eliminada", { id: toastId });
+          await fetchDetails();
+          if (onTaskUpdated) onTaskUpdated();
+        } catch (err) {
+          console.error(err);
+          toast.error("Error al eliminar subtarea", { id: toastId });
+          setError(parseApiError(err, "Error al eliminar la subtarea."));
+        } finally {
+          setBusyId(null);
+        }
+      },
+    });
   };
 
-  const handleDeleteTask = async () => {
-    if (
-      !window.confirm(
-        "¿Seguro que deseas eliminar esta tarea y todas sus subtareas asociadas? Esta acción no se puede deshacer.",
-      )
-    )
-      return;
-
-    const toastId = toast.loading("Eliminando actividad...");
-    try {
-      setError(null);
-      await deleteTask(task.id);
-      toast.success("Actividad eliminada", { id: toastId });
-      if (onTaskUpdated) onTaskUpdated();
-      onClose();
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al eliminar", { id: toastId });
-      setError(parseApiError(err, "Error al eliminar la tarea."));
-    }
+  const handleDeleteTask = () => {
+    openConfirm({
+      title: "Eliminar actividad",
+      message:
+        "¿Seguro que deseas eliminar esta actividad y todas sus subtareas? Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      isDanger: true,
+      onConfirm: async () => {
+        closeConfirm();
+        const toastId = toast.loading("Eliminando actividad...");
+        try {
+          setError(null);
+          await deleteTask(task.id);
+          toast.success("Actividad eliminada", { id: toastId });
+          if (onTaskUpdated) onTaskUpdated();
+          onClose();
+        } catch (err) {
+          console.error(err);
+          toast.error("Error al eliminar", { id: toastId });
+          setError(parseApiError(err, "Error al eliminar la tarea."));
+        }
+      },
+    });
   };
 
   const handleAddSubtask = async () => {
@@ -492,6 +518,18 @@ export default function TaskDetailsModal({ task, onClose, onTaskUpdated }) {
           />
         </div>
       </div>
+
+      {confirmModal.open && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          confirmText={confirmModal.confirmText}
+          cancelText="Cancelar"
+          isDanger={confirmModal.isDanger}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={closeConfirm}
+        />
+      )}
     </div>
   );
 }
