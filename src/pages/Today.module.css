@@ -1,0 +1,98 @@
+﻿.pageWrapper {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding-bottom: 60px;
+}
+
+.container {
+  padding: 2rem 1.5rem;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.dashboardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #64748b;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.noActivitiesCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.noActivitiesInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.noActivitiesIcon {
+  font-size: 1.5rem;
+}
+
+.noActivitiesTitle {
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.noActivitiesText {
+  color: #64748b;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.createActivityBtn {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  padding: 0.6rem 1.25rem;
+  background-color: #137fec;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.createActivityBtn:hover {
+  background-color: #0d66c2;
+}
+
