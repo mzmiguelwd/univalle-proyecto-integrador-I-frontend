@@ -13,7 +13,7 @@ function TodayOverloadWarnings({ rawTasks, onTasksUpdated }) {
   useEffect(() => {
     const loadDailyLimit = async () => {
       try {
-        // usamos cualquier fecha solo para obtener el límite del usuario
+        // usamos cualquier fecha solo para obtener el límite del usuario.
         const today = new Date().toISOString().split("T")[0];
         const data = await fetchWorkload(today);
         setDailyLimit(Number(data.daily_limit));
