@@ -1,14 +1,33 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../utils/taskUtils";
+import { fetchWorkload } from "../../api/tasks";
 import OverloadResolutionModal from "./OverloadResolutionModal";
 import classes from "./TodayOverloadWarnings.module.css";
 
-function TodayOverloadWarnings({ rawTasks, dailyLimit = 6, onTasksUpdated }) {
+function TodayOverloadWarnings({ rawTasks, onTasksUpdated }) {
   const [overloadedDays, setOverloadedDays] = useState([]);
   const [selectedDay, setSelectedDay] = useState(null);
+  const [dailyLimit, setDailyLimit] = useState(null);
 
   useEffect(() => {
+    const loadDailyLimit = async () => {
+      try {
+        // usamos cualquier fecha solo para obtener el límite del usuario
+        const today = new Date().toISOString().split("T")[0];
+        const data = await fetchWorkload(today);
+        setDailyLimit(Number(data.daily_limit));
+      } catch (e) {
+        console.error("No se pudo obtener el límite diario", e);
+      }
+    };
+
+    loadDailyLimit();
+  }, []);
+
+  useEffect(() => {
+    if (!dailyLimit) return;
+
     const dayMap = {};
 
     rawTasks.forEach((task) => {
@@ -44,14 +63,14 @@ function TodayOverloadWarnings({ rawTasks, dailyLimit = 6, onTasksUpdated }) {
       .filter(([_, info]) => info.total > dailyLimit)
       .map(([date, info]) => ({
         date,
-        total: info.total,
+        total: Number(info.total.toFixed(2)),
         subtasks: info.subtasks,
       }));
 
     setOverloadedDays(overloaded);
   }, [rawTasks, dailyLimit]);
 
-  if (overloadedDays.length === 0) return null;
+  if (!dailyLimit || overloadedDays.length === 0) return null;
 
   return (
     <>
