@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import toast from "react-hot-toast";
 import {
   MdArrowBack,
   MdCalendarToday,
@@ -20,7 +19,6 @@ import {
   fetchDashboardTasks,
 } from "../api/tasks";
 import CreateSubtask from "../components/CreateSubtask";
-import ConfirmModal from "../components/ConfirmModal";
 
 function sortSubtasksByDate(subtasks) {
   return [...subtasks].sort((a, b) => {
@@ -87,18 +85,17 @@ function TaskDetailPage() {
     loadCourses();
   }, []);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "¿Estás seguro de que deseas eliminar esta actividad? Todas sus subtareas se perderán permanentemente.",
+    );
+    if (!confirmDelete) return;
 
-  const handleDelete = () => setConfirmOpen(true);
-
-  const confirmDelete = async () => {
-    setConfirmOpen(false);
     try {
       await deleteTask(id);
       navigate("/hoy");
     } catch (error) {
-      console.error(error);
-      toast.error("Hubo un error al intentar eliminar la tarea.");
+      alert("Hubo un error al intentar eliminar la tarea.");
     }
   };
 
@@ -406,18 +403,6 @@ function TaskDetailPage() {
           )}
         </section>
       </div>
-
-      {confirmOpen && (
-        <ConfirmModal
-          title="Eliminar actividad"
-          message="¿Estás seguro? Todas las subtareas asociadas se perderán permanentemente."
-          confirmText="Eliminar"
-          cancelText="Cancelar"
-          isDanger
-          onConfirm={confirmDelete}
-          onCancel={() => setConfirmOpen(false)}
-        />
-      )}
     </div>
   );
 }
