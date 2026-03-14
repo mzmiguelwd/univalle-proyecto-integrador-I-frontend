@@ -1,0 +1,38 @@
+.warningContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.warningCard {
+  background: #fff4e5;
+  border: 1px solid #ffd8a8;
+  border-left: 5px solid #ff922b;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.warningText p {
+  margin: 6px 0;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.resolveBtn {
+  background: #ff922b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.profileLink {
+  color: #1c7ed6;
+  text-decoration: none;
+}
