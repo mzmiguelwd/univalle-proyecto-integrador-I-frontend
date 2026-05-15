@@ -10,6 +10,8 @@ import {
 import classes from "./Profile.module.css";
 import api from "../api/client";
 import { logoutUser } from "../api/auth";
+import ConfirmModal from "../components/ConfirmModal"; 
+import toast from "react-hot-toast";
 
 function ProfilePage() {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLimitInvalid, setIsLimitInvalid] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false); 
 
   const todayLabel = useMemo(
     () =>
@@ -48,10 +51,8 @@ function ProfilePage() {
     const loadProfilePage = async () => {
       try {
         setIsLoading(true);
-
         const profileResponse = await api.get("/api/profile/");
         const backendLimit = profileResponse.data?.daily_limit ?? 3;
-
         setDailyLimit(backendLimit);
         setInitialDailyLimit(backendLimit);
       } catch {
@@ -66,7 +67,7 @@ function ProfilePage() {
 
   const hasUnsavedChanges = Number(dailyLimit) !== Number(initialDailyLimit);
 
-  const handleSaveLimit = async (event) => {
+  const handleSaveLimit = (event) => {
     event.preventDefault();
 
     const nextValue = Number(dailyLimit);
@@ -75,19 +76,27 @@ function ProfilePage() {
       return;
     }
 
+    setIsLimitInvalid(false);
+    setShowConfirmModal(true);
+  };
+
+  // Callback que ejecuta el PATCH; lo llama ConfirmModal al confirmar
+  const handleConfirmSave = async () => {
+    const nextValue = Number(dailyLimit);
+
     try {
       setIsSaving(true);
-      setIsLimitInvalid(false);
-
       const response = await api.patch("/api/profile/", {
         daily_limit: nextValue,
       });
-
       const savedLimit = response.data?.daily_limit ?? nextValue;
       setDailyLimit(savedLimit);
       setInitialDailyLimit(savedLimit);
+      setShowConfirmModal(false); // cierra el modal en éxito
+      toast.success("tu limite de horas diarias se ha modificado exitosamente");
     } catch {
       console.error("No fue posible guardar la configuracion.");
+      throw new Error("Fallo al guardar"); // re-lanza para que ConfirmModal active el reintento
     } finally {
       setIsSaving(false);
     }
@@ -110,6 +119,20 @@ function ProfilePage() {
   return (
     <div className={classes.pageWrapper}>
       <div className={classes.container}>
+        {/* ---- Modal de confirmación ---- */}
+        {showConfirmModal && (
+          <ConfirmModal
+            title="¿Guardar nuevo límite?"
+            message={`Tu límite diario cambiará a ${dailyLimit} hora${Number(dailyLimit) !== 1 ? "s" : ""}. Esto cambiará la planificación de tus tareas a partir de hoy.`}
+            confirmText="Sí, guardar"
+            cancelText="Cancelar"
+            loadingText="Guardando..."
+            onConfirm={handleConfirmSave}
+            onCancel={() => setShowConfirmModal(false)}
+            isDanger={false}
+          />
+        )}
+
         <header className={classes.header}>
           <div className={classes.titleBlock}>
             <h1>Perfil</h1>
