@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 import classes from "./Auth.module.css";
@@ -13,6 +13,24 @@ function SignupPage() {
   });
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const successTimeoutRef = useRef(null);
+
+  const handleSuccessClose = () => {
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    navigate("/hoy");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleChange = (event) => {
     setFormData({ ...formData, [event.target.name]: event.target.value });
@@ -29,7 +47,12 @@ function SignupPage() {
       localStorage.setItem("token", data.token);
       localStorage.setItem("username", data.username);
 
-      navigate("/");
+      if (data.user_id) {
+        localStorage.setItem("user_id", data.user_id);
+      }
+
+      setShowSuccess(true);
+      successTimeoutRef.current = setTimeout(handleSuccessClose, 2000);
     } catch (error) {
       let errorMessage = "Ocurrió un error al registrarse. Verifica tus datos.";
 
@@ -113,6 +136,32 @@ function SignupPage() {
           </Link>
         </p>
       </div>
+
+      {showSuccess && (
+        <div
+          className={classes.successOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-live="polite"
+        >
+          <div className={classes.successModal}>
+            <div className={classes.successIcon} aria-hidden="true">
+              ✓
+            </div>
+            <h2 className={classes.successTitle}>¡Cuenta creada con éxito!</h2>
+            <p className={classes.successMessage}>
+              Te estamos llevando a Hoy...
+            </p>
+            <button
+              type="button"
+              className={classes.successButton}
+              onClick={handleSuccessClose}
+            >
+              Ir ahora
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
