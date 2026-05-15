@@ -165,6 +165,14 @@ export default function TaskModalHeader({
               <MdEdit className={classes.editHoverIcon} />
             </div>
           )}
+          {details.is_postponed && (
+             <span 
+               className={classes.metaBadge}
+               style={{backgroundColor: '#fff3cd', color: '#856404', fontWeight: 'bold', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px'}}
+             >
+               Pospuesta
+             </span>
+          )}
         </div>
 
         <div

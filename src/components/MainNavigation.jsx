@@ -6,7 +6,7 @@ import classes from "./MainNavigation.module.css";
 function MainNavigation() {
   const navItems = [
     { to: "/hoy", icon: <MdWbSunny size={24} />, label: "Hoy" },
-    { to: "/progreso", icon: <MdAnalytics size={24} />, label: "Progreso" },
+    // { to: "/progreso", icon: <MdAnalytics size={24} />, label: "Progreso" },
     { to: "/perfil", icon: <MdPerson size={24} />, label: "Perfil" },
   ];
 
@@ -37,7 +37,6 @@ function MainNavigation() {
           </li>
         ))}
       </ul>
-
     </nav>
   );
 }

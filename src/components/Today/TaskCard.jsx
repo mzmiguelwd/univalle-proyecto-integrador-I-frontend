@@ -16,6 +16,7 @@ function TaskCard({
   finalDelivery,
   isCompleted,
   isOverdue,
+  isPostponed,
   compact,
 }) {
   const priorityKey = priority?.toLowerCase() || "baja";
@@ -37,9 +38,19 @@ function TaskCard({
   return (
     <article className={cardClasses}>
       <header className={classes.header}>
-        <span className={`${classes.badge} ${priorityClass}`}>
-          {isCompleted ? "Completada" : priority}
-        </span>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <span className={`${classes.badge} ${priorityClass}`}>
+            {isCompleted ? "Completada" : priority}
+          </span>
+          {isPostponed && (
+            <span 
+              className={classes.badge}
+              style={{backgroundColor: '#fff3cd', color: '#856404'}}
+            >
+              Pospuesta
+            </span>
+          )}
+        </div>
 
         {!compact && (
           <button className={classes.optionsBtn} aria-label="Opciones de tarea">

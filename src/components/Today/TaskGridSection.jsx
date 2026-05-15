@@ -80,6 +80,7 @@ export default function TaskGridSection({
                 finalDelivery={formatDate(t.due_date, true)}
                 isOverdue={isOverdue}
                 isCompleted={isCompleted}
+                isPostponed={t.is_postponed}
                 compact={compact}
               />
             </div>

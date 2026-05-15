@@ -267,6 +267,15 @@ export default function TaskModalSubtasks({
                       <MdAccessTime /> {formatHours(st.estimated_hours)}
                     </span>
                   )}
+
+                  {st.status === "postponed" && (
+                    <span 
+                      className={classes.metaBadge} 
+                      style={{backgroundColor: '#fff3cd', color: '#856404', fontWeight: 500, borderColor: '#ffeeba'}}
+                    >
+                      Pospuesta
+                    </span>
+                  )}
                 </div>
               </div>
 
