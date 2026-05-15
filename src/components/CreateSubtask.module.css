@@ -162,3 +162,58 @@
   color: #a16207;
   text-decoration: underline;
 }
+
+.dateField {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.infoTooltip {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.infoIcon {
+  font-size: 1.1rem;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.infoIcon:hover {
+  color: #2563eb;
+}
+
+.tooltipText {
+  position: absolute;
+  bottom: 140%;
+  right: 0;
+
+  width: 240px;
+  padding: 0.7rem;
+
+  background: #111827;
+  color: white;
+
+  font-size: 0.85rem;
+  line-height: 1.4;
+
+  border-radius: 8px;
+
+  opacity: 0;
+  visibility: hidden;
+
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+
+  z-index: 10;
+}
+
+.infoTooltip:hover .tooltipText {
+  opacity: 1;
+  visibility: visible;
+}

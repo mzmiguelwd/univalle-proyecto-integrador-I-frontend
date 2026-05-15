@@ -5,6 +5,7 @@ import {
   MdAdd,
   MdTaskAlt,
   MdWarningAmber,
+  MdInfoOutline,
 } from "react-icons/md";
 
 import classes from "./CreateSubtask.module.css";
@@ -157,6 +158,14 @@ function CreateSubtask({ taskId, taskDueDate, onSubtaskCreated }) {
             onChange={(event) => setTargetDate(event.target.value)}
             title="Fecha objetivo"
           />
+
+          <div className={classes.infoTooltip}>
+            <MdInfoOutline className={classes.infoIcon} />
+            <span className={classes.tooltipText}>
+              La fecha objetivo indica hasta qué día tienes para completar esta
+              subtarea, no necesariamente el día exacto en que debes hacerla.
+            </span>
+          </div>
         </div>
 
         <div className={classes.inputWrapper}>
