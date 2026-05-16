@@ -217,3 +217,10 @@
   opacity: 1;
   visibility: visible;
 }
+
+:global(.react-datepicker__day--disabled) {
+  color: #c4c4c4 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  opacity: 0.35 !important;
+}

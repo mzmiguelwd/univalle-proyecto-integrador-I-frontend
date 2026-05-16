@@ -11,6 +11,8 @@ import {
 import classes from "./CreateSubtask.module.css";
 import { createSubtask, fetchWorkload } from "../api/tasks";
 import { parseLocalDate } from "../utils/taskUtils";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 function CreateSubtask({ taskId, taskDueDate, onSubtaskCreated }) {
   const [name, setName] = useState("");
@@ -19,6 +21,17 @@ function CreateSubtask({ taskId, taskDueDate, onSubtaskCreated }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [workloadInfo, setWorkloadInfo] = useState(null);
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  const maxDate = taskDueDate ? new Date(taskDueDate) : null;
+
+  if (maxDate) {
+    maxDate.setHours(23, 59, 59, 999);
+  }
+
+
+
 
   useEffect(() => {
     if (targetDate) {
@@ -136,6 +149,11 @@ function CreateSubtask({ taskId, taskDueDate, onSubtaskCreated }) {
     setEstimatedHours("");
   };
 
+  const yesterdayDate = new Date(todayDate);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+
+  
+
   return (
     <section className={classes.box}>
       <h2 className={classes.title}>Agregar subtarea rápida</h2>
@@ -151,12 +169,23 @@ function CreateSubtask({ taskId, taskDueDate, onSubtaskCreated }) {
         </div>
 
         <div className={classes.inputWrapper}>
-          <input
-            type="date"
-            max={taskDueDate ? taskDueDate.split("T")[0] : undefined}
-            value={targetDate}
-            onChange={(event) => setTargetDate(event.target.value)}
-            title="Fecha objetivo"
+          <DatePicker
+            selected={targetDate ? new Date(`${targetDate}T00:00:00`) : null}
+            onChange={(date) => {
+              if (!date) return;
+
+              const selected = new Date(date);
+              selected.setHours(0, 0, 0, 0);
+
+              const formattedDate = selected.toLocaleDateString("en-CA");
+              setTargetDate(formattedDate);
+              setError("");
+            }}
+            minDate={todayDate}
+            maxDate={maxDate}
+            dateFormat="yyyy-MM-dd"
+            placeholderText="Fecha objetivo"
+            className={classes.datePickerInput}
           />
 
           <div className={classes.infoTooltip}>

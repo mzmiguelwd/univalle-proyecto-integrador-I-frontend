@@ -136,19 +136,10 @@ export default function TaskModalSubtasks({
                 className={`${classes.subtaskRow} ${classes.subtaskRowEditing}`}
               >
                 <div className={classes.editSubtaskBlock}>
-                  <input
-                    className={classes.inlineInput}
-                    placeholder="Nombre de la subtarea"
-                    value={st.name || st.title || ""}
-                    onChange={(e) =>
-                      handleUpdateDraftSubtask(st.id, "name", e.target.value)
-                    }
-                    autoFocus
-                  />
-
                   <div className={classes.editSubtaskRow}>
                     <input
                       type="date"
+                      min={new Date().toLocaleDateString("en-CA")}
                       max={taskDueDate ? taskDueDate.split("T")[0] : undefined}
                       className={classes.inlineInput}
                       value={st.target_date || ""}
@@ -328,6 +319,7 @@ export default function TaskModalSubtasks({
 
                 <input
                   type="date"
+                  min={new Date().toLocaleDateString("en-CA")}
                   max={taskDueDate ? taskDueDate.split("T")[0] : undefined}
                   className={classes.inlineInput}
                   value={newSubtaskDate}
